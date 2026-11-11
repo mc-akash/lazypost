@@ -15,7 +15,8 @@ history store.
 brew install mc-akash/tap/lazypost
 ```
 
-or
+or download a binary from the
+[releases page](https://github.com/mc-akash/lazypost/releases), or
 
 ```sh
 go install github.com/mc-akash/lazypost/cmd/lazypost@latest

@@ -1,0 +1,32 @@
+version: 2
+
+project_name: lazypost
+
+builds:
+  - main: ./cmd/lazypost
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.buildVersion=v{{ .Version }}
+
+homebrew_casks:
+  - repository:
+      owner: mc-akash
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/mc-akash/lazypost
+    description: Lazygit-style terminal HTTP client
+    hooks:
+      post:
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/lazypost"]
+          end
