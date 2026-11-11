@@ -11,7 +11,11 @@ history store.
 
 ## Install
 
-From a checkout:
+```sh
+go install github.com/mc-akash/lazypost/cmd/lazypost@latest
+```
+
+Or from a checkout:
 
 ```sh
 CGO_ENABLED=0 go build -o lazypost ./cmd/lazypost

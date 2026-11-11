@@ -6,9 +6,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 )
 
-var version = "dev"
+func version() string {
+	if bi, ok := debug.ReadBuildInfo(); ok && bi.Main.Version != "" && bi.Main.Version != "(devel)" {
+		return bi.Main.Version
+	}
+	return "dev"
+}
 
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
@@ -50,7 +56,7 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 	if o.showVersion {
-		fmt.Fprintln(stdout, "lazypost", version)
+		fmt.Fprintln(stdout, "lazypost", version())
 		return nil
 	}
 	b := newAppBuilder(o)
