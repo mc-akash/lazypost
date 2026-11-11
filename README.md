@@ -12,6 +12,12 @@ history store.
 ## Install
 
 ```sh
+brew install mc-akash/tap/lazypost
+```
+
+or
+
+```sh
 go install github.com/mc-akash/lazypost/cmd/lazypost@latest
 ```
 
