@@ -43,16 +43,23 @@ func cycleTab(tab, delta, n int) int { return ((tab+delta)%n + n) % n }
 
 func (m Model) requestBindings() []binding {
 	format := binding{keys: keys(&km.FormatBody), help: "pretty-print the JSON body (Body tab)"}
+	bodyType := binding{keys: keys(&km.BodyType), run: noCmd(Model.cycleBodyType), help: "cycle body type (Body tab)"}
 	if m.request.tab == reqTabBody {
 		format.run, format.hint = noCmd(Model.formatBody), "format"
+		bodyType.hint = "body type"
+	}
+	toggle, add, del := "", "", ""
+	if m.request.tab == reqTabHeaders || m.request.tab == reqTabParams {
+		toggle, add, del = "toggle", "add", "delete"
 	}
 	tabs := keys(&km.HeadersTab, &km.BodyTab, &km.AuthTab, &km.ParamsTab)
 	return []binding{
 		{keys: keys(enter), run: Model.enterRow, help: "edit row (add when empty), body editor, auth type", hint: "edit"},
 		format,
-		{keys: keys(space), run: noCmd(Model.toggleRow), help: "enable / disable header or param row", hint: "toggle"},
-		{keys: keys(&km.Add), run: noCmd(Model.addKVRow), hint: "add"},
-		{keys: keys(&km.Delete), run: noCmd(Model.deleteRow), hint: "delete"},
+		bodyType,
+		{keys: keys(space), run: noCmd(Model.toggleRow), help: "enable / disable header or param row", hint: toggle},
+		{keys: keys(&km.Add), run: noCmd(Model.addKVRow), hint: add},
+		{keys: keys(&km.Delete), run: noCmd(Model.deleteRow), hint: del},
 		{keys: keys(&km.Method), run: noCmd(Model.openMethodPicker), help: "pick method", hint: "method"},
 		{keys: keys(&km.EditURL), run: noCmd(Model.editURL), help: "edit URL", hint: "url"},
 		{keys: keys(&km.EditInEditor), run: Model.openEditor, help: "edit request in $EDITOR", hint: "$EDITOR"},
@@ -76,7 +83,6 @@ func (m Model) requestBindings() []binding {
 			return m.moveReqRow(direction(m.lastKey, km.NextItem)), nil
 		}, help: "select row"},
 		{keys: keys(&km.Add, &km.Delete), help: "add (header picker on Headers) / delete row"},
-		{keys: keys(&km.BodyType), run: noCmd(Model.cycleBodyType), help: "cycle body type"},
 	}
 }
 

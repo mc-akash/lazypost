@@ -66,7 +66,7 @@ func (b *appBuilder) Build() (*appRunner, error) {
 	m, err := ui.NewModelBuilder().
 		WithWorkspace(ws).
 		WithState(store, sess).
-		WithHistory(history.Open(filepath.Join(dir, "history.jsonl"))).
+		WithHistory(history.Open(filepath.Join(dir, "history.jsonl")).WithMax(b.cfg.History)).
 		WithClipboard(systemClipboard{}).
 		WithClient(b.buildClient()).
 		WithStartupStatus(startup).

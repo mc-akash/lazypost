@@ -11,7 +11,7 @@ const multiLineCurl = "curl 'https://a.io/x' \\\n  -H 'A: b' \\\r\n  --data-raw 
 
 func wantImportedName(t *testing.T, m Model) {
 	t.Helper()
-	m = press(m, "enter")
+	m = press(m, "ctrl+s")
 	if m.input() == nil || m.input().title != dialogRequestName || m.input().ti.Value() != "POST /x" {
 		t.Fatalf("status %q, input %+v: want the Request name dialog", m.Status(), m.input())
 	}
@@ -21,8 +21,8 @@ func TestImportMultiLineCurlFromClipboard(t *testing.T) {
 	m := newTestModel(t, fixtureWS(t))
 	m.deps.Clip.(*fakeClip).text = multiLineCurl + "\n"
 	m = press(m, "i")
-	if v := m.input().ti.Value(); strings.Contains(v, `\`) {
-		t.Fatalf("prefill kept line continuations: %q", v)
+	if v := m.bodyEd().ta.Value(); strings.Count(v, "\n") != 2 {
+		t.Fatalf("prefill should keep the three lines: %q", v)
 	}
 	wantImportedName(t, m)
 }
@@ -35,7 +35,7 @@ func TestImportMultiLineCurlFromPaste(t *testing.T) {
 }
 
 func importIntoScratchKeys(m Model, url string) Model {
-	return press(typeText(press(m, "4", "i"), "curl "+url), "enter")
+	return press(typeText(press(m, "4", "i"), "curl "+url), "ctrl+s")
 }
 
 func TestImportIntoExistingScratchAsks(t *testing.T) {

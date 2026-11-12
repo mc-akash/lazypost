@@ -16,7 +16,7 @@ func importAs(t *testing.T, m Model, ws *workspace.Workspace, cmd, name string) 
 	t.Helper()
 	orders := folderByName(t, ws, "orders")
 	before := slices.Clone(orders.Requests)
-	m = press(typeText(press(m, "i"), cmd), "enter")
+	m = press(typeText(press(m, "i"), cmd), "ctrl+s")
 	m.input().ti.SetValue(name)
 	m = press(m, "enter")
 	for _, r := range orders.Requests {

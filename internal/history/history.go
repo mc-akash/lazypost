@@ -19,7 +19,7 @@ import (
 	"github.com/mc-akash/lazypost/internal/workspace"
 )
 
-const MaxEntries = 200
+const DefaultMax = 10
 
 const MaxStoredBody = 32 << 10
 
@@ -48,11 +48,18 @@ type Entry struct {
 
 type Store struct {
 	path string
+	max  int
 }
 
 func Open(path string) *Store {
-	return &Store{path: path}
+	return &Store{path: path, max: DefaultMax}
 }
+
+func (s *Store) WithMax(n int) *Store {
+	return &Store{path: s.path, max: n}
+}
+
+func (s *Store) Max() int { return s.max }
 
 func (s *Store) Append(e Entry) error {
 	if e.ID == "" {
@@ -76,11 +83,28 @@ func (s *Store) Append(e Entry) error {
 	if err != nil {
 		return err
 	}
-	if len(lines)+1 > MaxEntries {
-		kept := append(slices.Clone(lines[len(lines)+1-MaxEntries:]), line)
-		return s.rewrite(kept)
+	if kept := dropOldest(lines, e.Root, s.max-1); len(kept) < len(lines) {
+		return s.rewrite(append(kept, line))
 	}
 	return s.appendLine(line)
+}
+
+func dropOldest(lines [][]byte, root string, keep int) [][]byte {
+	kept := make([][]byte, 0, len(lines))
+	for _, l := range slices.Backward(lines) {
+		var e struct {
+			Root string `json:"root"`
+		}
+		if json.Unmarshal(l, &e) == nil && e.Root == root {
+			if keep <= 0 {
+				continue
+			}
+			keep--
+		}
+		kept = append(kept, l)
+	}
+	slices.Reverse(kept)
+	return kept
 }
 
 func (s *Store) Load() ([]Entry, error) {

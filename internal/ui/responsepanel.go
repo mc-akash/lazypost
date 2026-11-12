@@ -225,7 +225,7 @@ func (Model) responseBindings() []binding {
 		}), help: "next / previous match", hint: "next/prev"},
 		{keys: keys(&km.CopyBody), run: func(m Model) (Model, tea.Cmd) {
 			return m.copyBody(m.currentResponse())
-		}, help: "copy body", hint: "copy"},
+		}, help: "copy body", hint: "copy body"},
 		{keys: keys(&km.Send), run: Model.send, help: "send the selected request", hint: "send"},
 		{keys: keys(esc), run: noCmd(Model.handleEsc), help: "back to the side panel"},
 		{keys: keys(&km.PrevTab, &km.NextTab), run: scrollResp(func(m Model, v responsePanel, _ int) (Model, responsePanel) {

@@ -9,6 +9,8 @@ Requests, environments and variables are plain YAML files you can edit by
 hand and keep in git. Secrets live in gitignored files and never reach the
 history store.
 
+![lazypost demo](docs/demo.gif)
+
 ## Install
 
 ```sh
@@ -152,7 +154,8 @@ and restores them on the next launch, together with the last environment
 and request. A draft whose file changed on disk is marked `!`. Variable
 edits save immediately.
 
-History (the newest 200 sends, secrets redacted), drafts and the session
+History (the newest 10 sends per workspace, secrets redacted; see
+`history` in the [config](#config)), drafts and the session
 are stored in `$XDG_STATE_HOME/lazypost` (default `~/.local/state/lazypost`),
 readable only by you.
 
@@ -253,12 +256,12 @@ keys; every action can be rebound in the [config](#keybinds).
 | `[` / `]` | previous / next tab |
 | `H` / `B` / `A` / `P` | Headers / Body / Auth / Params tab |
 | `enter` | edit the row; on an empty tab add one; on Auth `Type:` pick the type; on Body open the body editor |
-| `space` | send / don't send the row (`[x]` / `[ ]`) |
-| `a` / `d` | add / delete row |
+| `space` | send / don't send the row (`[x]` / `[ ]`), Headers and Params tabs |
+| `a` / `d` | add / delete row, Headers and Params tabs |
 | `m` | pick method |
 | `u` | edit URL |
-| `t` | cycle body type |
-| `f` | pretty-print the JSON body |
+| `t` | cycle body type, Body tab |
+| `f` | pretty-print the JSON body, Body tab |
 | `e` | edit the whole request in `$EDITOR` (also for form and multipart bodies) |
 | `w` / `W` | save / save as |
 | `c` / `i` | copy as cURL / import cURL into the unsaved request |
@@ -298,6 +301,7 @@ the defaults apply. Every key is optional:
 workspace: ~/lazypost   # default workspace; ~ expands to your home dir
 timeout: 30s            # per-request timeout, must be > 0 (default 30s)
 insecure: false         # skip TLS certificate verification
+history: 10             # sends kept in History per workspace, at least 1 (default 10)
 keybinds:               # action: key, or a list of keys
   send: ctrl+r
   next_item: [j, down, ctrl+n]
@@ -309,7 +313,7 @@ keybinds:               # action: key, or a list of keys
 | `insecure` | on when this key or the `-insecure` flag is set |
 
 The file is read strictly: an unknown key (a typo like `timout`), a
-malformed or non-positive timeout, or broken YAML stops lazypost before
+malformed or non-positive timeout, a history below 1, or broken YAML stops lazypost before
 the UI opens, with an error naming the file and the problem. An empty file
 is fine.
 
@@ -405,8 +409,9 @@ key, or a clash stops lazypost at startup, naming the action and the key.
 with variables resolved and auth folded into headers. Secrets are included;
 it only goes to your clipboard.
 
-`i` asks for a cURL command (prefilled from the clipboard), then a name,
-and saves a new request in the current folder. In `[4]`, or with no
+`i` opens an editor for a cURL command (prefilled from the clipboard):
+`ctrl+s` imports it, `ctrl+e` continues in `$EDITOR`, `esc` cancels. It
+then asks for a name and saves a new request in the current folder. In `[4]`, or with no
 collections yet, it fills the unsaved request instead, asking first if one
 exists. Multi-line commands with `\` line breaks and combined flags like
 `-sSL` work; `-d @file` is refused, since lazypost does not read the file.

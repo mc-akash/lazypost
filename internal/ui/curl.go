@@ -30,26 +30,28 @@ func (m Model) copyAsCurl() (Model, tea.Cmd) {
 func (m Model) importCurl(toScratch bool) Model {
 	initial := ""
 	if text, err := m.deps.Clip.Read(); err == nil && strings.HasPrefix(strings.TrimSpace(text), "curl") {
-		initial = strings.TrimSpace(curl.JoinLines(text))
+		initial = strings.TrimSpace(text)
 	}
-	submit := submitCurl
-	if toScratch {
-		submit = submitCurlScratch
-	}
-	in := newInput(dialogPasteCurl, initial, submit).withHint(hintCurl)
-	in.onPaste = curl.JoinLines
-	m.overlay = &in
+	ed := newBodyEditor("", initial, m.width, m.height)
+	ed.title, ed.ta.Placeholder = dialogPasteCurl, hintCurl
+	ed.onSave = func(m Model, value string) (Model, tea.Cmd) { return m.submitCurl(value, toScratch) }
+	m.overlay = ed
 	return m
 }
 
-func submitCurl(m Model, value string) (Model, tea.Cmd) {
+func (m Model) submitCurl(value string, toScratch bool) (Model, tea.Cmd) {
 	if strings.TrimSpace(value) == "" {
+		m.overlay = nil
 		return m, nil
 	}
 	imported, err := curl.Import(value)
 	if err != nil {
 		m = m.fail("curl: " + err.Error())
 		return m, nil
+	}
+	m.overlay = nil
+	if toScratch {
+		return m.importIntoScratch(imported), nil
 	}
 	in := newInput(dialogRequestName, imported.Name, func(m Model, name string) (Model, tea.Cmd) {
 		return m.createImported(strings.TrimSpace(name), imported), nil

@@ -12,7 +12,6 @@ type inputModel struct {
 	title    string
 	hint     string
 	onSubmit func(Model, string) (Model, tea.Cmd)
-	onPaste  func(string) string
 }
 
 func newInput(title, initial string, onSubmit func(Model, string) (Model, tea.Cmd)) inputModel {
@@ -61,9 +60,6 @@ func (in inputModel) bindings() []binding {
 }
 
 func (in *inputModel) paste(m Model, msg tea.PasteMsg) (Model, tea.Cmd) {
-	if in.onPaste != nil {
-		msg.Content = in.onPaste(msg.Content)
-	}
 	return in.feed(m, msg)
 }
 

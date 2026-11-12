@@ -15,10 +15,17 @@ type historyPanel struct {
 	cursor  int
 }
 
-func (p historyPanel) add(e history.Entry, selectNew bool) historyPanel {
-	entries := make([]history.Entry, 0, min(len(p.entries)+1, history.MaxEntries))
+func (m Model) historyMax() int {
+	if m.deps.History == nil {
+		return history.DefaultMax
+	}
+	return m.deps.History.Max()
+}
+
+func (p historyPanel) add(e history.Entry, selectNew bool, limit int) historyPanel {
+	entries := make([]history.Entry, 0, min(len(p.entries)+1, limit))
 	entries = append(entries, e)
-	entries = append(entries, p.entries[:min(len(p.entries), history.MaxEntries-1)]...)
+	entries = append(entries, p.entries[:min(len(p.entries), limit-1)]...)
 	cursor := 0
 	if !selectNew && len(p.entries) > 0 {
 		cursor = clampCursor(p.cursor+1, len(entries))
@@ -118,11 +125,11 @@ func (m Model) handleHistoryLoaded(msg historyLoadedMsg) Model {
 	if msg.err != nil {
 		m = m.fail("history: " + msg.err.Error())
 	}
-	m.history = m.history.merge(msg.entries)
+	m.history = m.history.merge(msg.entries, m.historyMax())
 	return m
 }
 
-func (p historyPanel) merge(loaded []history.Entry) historyPanel {
+func (p historyPanel) merge(loaded []history.Entry, limit int) historyPanel {
 	seen := make(map[string]bool, len(p.entries))
 	for _, e := range p.entries {
 		if e.ID != "" {
@@ -131,7 +138,7 @@ func (p historyPanel) merge(loaded []history.Entry) historyPanel {
 	}
 	entries := slices.Clone(p.entries)
 	for _, e := range loaded {
-		if len(entries) >= history.MaxEntries {
+		if len(entries) >= limit {
 			break
 		}
 		if e.ID == "" || !seen[e.ID] {

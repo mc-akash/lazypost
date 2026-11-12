@@ -10,6 +10,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/mc-akash/lazypost/internal/history"
 	"github.com/mc-akash/lazypost/internal/paths"
 )
 
@@ -19,11 +20,12 @@ type Config struct {
 	Workspace string        `yaml:"workspace"`
 	Timeout   time.Duration `yaml:"timeout"`
 	Insecure  bool          `yaml:"insecure"`
+	History   int           `yaml:"history"`
 	Keybinds  Keymap        `yaml:"keybinds"`
 }
 
 func Load(path string) (Config, error) {
-	c := Config{Timeout: defaultTimeout, Keybinds: DefaultKeymap()}
+	c := Config{Timeout: defaultTimeout, History: history.DefaultMax, Keybinds: DefaultKeymap()}
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return c, nil
@@ -38,6 +40,9 @@ func Load(path string) (Config, error) {
 	}
 	if c.Timeout <= 0 {
 		return Config{}, fmt.Errorf("%s: timeout must be > 0, got %s", path, c.Timeout)
+	}
+	if c.History < 1 {
+		return Config{}, fmt.Errorf("%s: history must be at least 1, got %d", path, c.History)
 	}
 	if c.Workspace, err = paths.ExpandHome(c.Workspace); err != nil {
 		return Config{}, fmt.Errorf("%s: %w", path, err)

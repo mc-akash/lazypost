@@ -72,8 +72,8 @@ func TestHistoryRowSanitized(t *testing.T) {
 		Template: workspace.Request{Name: "n\x1b_x\x1b\\", Method: "GET\x1bP"},
 		Sent:     workspace.Request{URL: "http://h/\x1b]8;;x\a"},
 	}
-	m.history = m.history.add(e, true)
-	m.history = m.history.add(history.Entry{ID: "y", Time: time.Now(), Root: m.ws().Root, Template: workspace.Request{Method: "GET"}, Sent: e.Sent}, false)
+	m.history = m.history.add(e, true, m.historyMax())
+	m.history = m.history.add(history.Entry{ID: "y", Time: time.Now(), Root: m.ws().Root, Template: workspace.Request{Method: "GET"}, Sent: e.Sent}, false, m.historyMax())
 	for _, keys := range [][]string{nil, {"3"}, {"3", "j"}} {
 		m := press(m, keys...)
 		assertNoInjection(t, m)

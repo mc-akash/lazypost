@@ -47,10 +47,13 @@ func TestImportCurlCreatesRequest(t *testing.T) {
 	before := slices.Clone(orders.Requests)
 
 	m = press(m, "i")
-	if m.input() == nil || m.input().title != dialogPasteCurl || m.input().ti.Value() != "" {
-		t.Fatal("i should open an empty Paste cURL dialog")
+	if ed := m.bodyEd(); ed == nil || ed.title != dialogPasteCurl || ed.ta.Value() != "" {
+		t.Fatal("i should open an empty Paste cURL editor")
 	}
-	m = press(typeText(m, `curl -X POST https://a.io/x -d '{"a":1}'`), "enter")
+	if out := m.plainRender(); !strings.Contains(out, "┌"+dialogPasteCurl) || !strings.Contains(out, "import: ctrl+s") || strings.Contains(out, "format:") {
+		t.Fatalf("editor should be titled Paste cURL and hint import only:\n%s", out)
+	}
+	m = press(typeText(m, `curl -X POST https://a.io/x -d '{"a":1}'`), "ctrl+s")
 	if m.input() == nil || m.input().title != dialogRequestName || m.input().ti.Value() != "POST /x" {
 		t.Fatalf("want Request name dialog prefilled with the imported name, got %+v", m.input())
 	}
@@ -79,13 +82,15 @@ func TestImportCurlCreatesRequest(t *testing.T) {
 func TestImportCurlPrefillsFromClipboard(t *testing.T) {
 	m := newTestModel(t, fixtureWS(t))
 	m.deps.Clip.(*fakeClip).text = "curl https://a.io/y"
-	if m = press(m, "i"); m.input() == nil || m.input().ti.Value() != "curl https://a.io/y" {
-		t.Fatal("input should be prefilled with a curl clipboard")
+	if m = press(m, "i"); m.bodyEd() == nil || m.bodyEd().ta.Value() != "curl https://a.io/y" {
+		t.Fatal("editor should be prefilled with a curl clipboard")
 	}
-	m = press(m, "esc")
+	if m = press(typeText(m, " -v"), "esc"); m.overlay != nil {
+		t.Fatal("esc should close the editor without asking")
+	}
 	m.deps.Clip.(*fakeClip).text = "not a command"
-	if m = press(m, "i"); m.input() == nil || m.input().ti.Value() != "" {
-		t.Fatal("input should be empty when the clipboard is not a curl command")
+	if m = press(m, "i"); m.bodyEd() == nil || m.bodyEd().ta.Value() != "" {
+		t.Fatal("editor should be empty when the clipboard is not a curl command")
 	}
 }
 
@@ -94,9 +99,12 @@ func TestImportCurlError(t *testing.T) {
 	m := newTestModel(t, ws)
 	orders := folderByName(t, ws, "orders")
 	n := len(orders.Requests)
-	m = press(typeText(press(m, "i"), "curl --proxy x"), "enter")
-	if !strings.Contains(m.Status(), "curl:") || m.input() != nil {
-		t.Fatalf("status = %q, input = %v", m.Status(), m.input())
+	m = press(typeText(press(m, "i"), "curl --proxy x"), "ctrl+s")
+	if !strings.Contains(m.Status(), "curl:") || m.prompt() == nil || m.prompt().title != dialogError {
+		t.Fatalf("status = %q, prompt = %v", m.Status(), m.prompt())
+	}
+	if m = press(m, "x"); m.bodyEd() == nil || m.bodyEd().ta.Value() != "curl --proxy x" {
+		t.Fatal("a failed import should keep the editor and its text")
 	}
 	if len(orders.Requests) != n {
 		t.Fatal("a failed import must not create a request")

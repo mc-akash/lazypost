@@ -88,7 +88,7 @@ func TestHistoryResendWithoutPathShowsFullResponse(t *testing.T) {
 	big := []byte(strings.Repeat("a", history.MaxStoredBody+5000))
 	srv := serve(t, &recorder{contentType: "text/plain", body: big})
 	m, _ := sendModel(t, fixtureWS(t), srv.URL)
-	m.history = m.history.add(history.Entry{Template: workspace.Request{Name: "adhoc", Method: "GET", URL: srv.URL}}, true)
+	m.history = m.history.add(history.Entry{Template: workspace.Request{Name: "adhoc", Method: "GET", URL: srv.URL}}, true, m.historyMax())
 	m = pressRun(press(m, "3"), "s")
 
 	sel, ok := m.selection()

@@ -75,7 +75,11 @@ func TestAppendAssignsID(t *testing.T) {
 
 func TestCapMaxEntries(t *testing.T) {
 	s, p := newStore(t)
-	for i := 1; i <= 205; i++ {
+	if s.Max() != DefaultMax {
+		t.Fatalf("default max = %d", s.Max())
+	}
+	s = s.WithMax(5)
+	for i := 1; i <= 8; i++ {
 		if err := s.Append(entry(i)); err != nil {
 			t.Fatal(err)
 		}
@@ -84,11 +88,11 @@ func TestCapMaxEntries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != MaxEntries {
-		t.Fatalf("len = %d, want %d", len(got), MaxEntries)
+	if len(got) != 5 {
+		t.Fatalf("len = %d, want 5", len(got))
 	}
-	if got[0].ID != "e205" || got[len(got)-1].ID != "e6" {
-		t.Fatalf("newest %q oldest %q, want e205/e6", got[0].ID, got[len(got)-1].ID)
+	if got[0].ID != "e8" || got[len(got)-1].ID != "e4" {
+		t.Fatalf("newest %q oldest %q, want e8/e4", got[0].ID, got[len(got)-1].ID)
 	}
 	info, err := os.Stat(p)
 	if err != nil {
@@ -286,5 +290,28 @@ func TestRedactStringLongestSecretFirst(t *testing.T) {
 	}
 	if secrets[0] != "abc123" {
 		t.Fatalf("caller slice mutated: %v", secrets)
+	}
+}
+
+func TestCapIsPerWorkspace(t *testing.T) {
+	s, _ := newStore(t)
+	s = s.WithMax(2)
+	for i, root := range []string{"/a", "/b", "/a", "/a", "/b", "/a"} {
+		e := entry(i + 1)
+		e.Root = root
+		if err := s.Append(e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := s.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ids []string
+	for _, e := range got {
+		ids = append(ids, e.Root+":"+e.ID)
+	}
+	if want := "/a:e6 /b:e5 /a:e4 /b:e2"; strings.Join(ids, " ") != want {
+		t.Fatalf("kept %v, want %s", ids, want)
 	}
 }

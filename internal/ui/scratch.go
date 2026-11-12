@@ -1,11 +1,8 @@
 package ui
 
 import (
-	"strings"
-
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/mc-akash/lazypost/internal/curl"
 	"github.com/mc-akash/lazypost/internal/workspace"
 )
 
@@ -121,18 +118,6 @@ func (m Model) submitScratchSaveAs(value string) Model {
 	m.collections = m.collections.reveal(m.ws().Collections, created.Path)
 	m.status = "saved as " + m.displayPath(created) + note
 	return m.persistSession()
-}
-
-func submitCurlScratch(m Model, value string) (Model, tea.Cmd) {
-	if strings.TrimSpace(value) == "" {
-		return m, nil
-	}
-	imported, err := curl.Import(value)
-	if err != nil {
-		m = m.fail("curl: " + err.Error())
-		return m, nil
-	}
-	return m.importIntoScratch(imported), nil
 }
 
 func (m Model) importIntoScratch(imported workspace.Request) Model {

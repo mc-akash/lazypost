@@ -43,7 +43,7 @@ func TestNewDoesNotReadHistoryUntilInit(t *testing.T) {
 	}
 
 	sent := histEntry("new", ws.Root, "sent before load", 0)
-	m.history = m.history.add(sent, true)
+	m.history = m.history.add(sent, true, m.historyMax())
 	if err := d.History.Append(sent); err != nil {
 		t.Fatal(err)
 	}
@@ -140,5 +140,20 @@ func TestStartupStatusShown(t *testing.T) {
 	d.StartupStatus = "session state unreadable: boom (starting fresh)"
 	if m := newModel(d); !strings.Contains(m.Status(), d.StartupStatus) {
 		t.Fatalf("status = %q", m.Status())
+	}
+}
+
+func TestHistoryPanelKeepsConfiguredMax(t *testing.T) {
+	m := newTestModel(t, fixtureWS(t))
+	m.deps.History = history.Open(filepath.Join(t.TempDir(), "h.jsonl")).WithMax(2)
+	for _, id := range []string{"a", "b", "c"} {
+		m.history = m.history.add(history.Entry{ID: id}, true, m.historyMax())
+	}
+	if n := len(m.history.entries); n != 2 || m.history.entries[0].ID != "c" {
+		t.Fatalf("entries = %d, newest %q", n, m.history.entries[0].ID)
+	}
+	loaded := []history.Entry{{ID: "x"}, {ID: "y"}}
+	if n := len(historyPanel{}.merge(loaded, 1).entries); n != 1 {
+		t.Fatalf("merge kept %d, want 1", n)
 	}
 }

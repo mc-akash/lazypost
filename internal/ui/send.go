@@ -264,7 +264,7 @@ func (m Model) handleSendResult(msg sendResultMsg) (Model, tea.Cmd) {
 		results[histKey(e)] = res
 	}
 	m.results = results
-	m.history = m.history.add(e, f.fromHistory)
+	m.history = m.history.add(e, f.fromHistory, m.historyMax())
 	if m.deps.History == nil {
 		return m, nil
 	}

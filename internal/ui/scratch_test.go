@@ -328,7 +328,7 @@ func TestScratchImportCurlInRequestPanel(t *testing.T) {
 	ws := fixtureWS(t)
 	before := requestFiles(t, ws)
 	m := newTestModel(t, ws)
-	m = press(typeText(press(m, "4", "i"), secretCurl), "enter")
+	m = press(typeText(press(m, "4", "i"), secretCurl), "ctrl+s")
 	if m.input() != nil {
 		t.Fatalf("import into [4] must not ask for a name, input = %+v", m.input())
 	}
@@ -360,7 +360,7 @@ func TestScratchImportCurlWithoutEnv(t *testing.T) {
 	ws := fixtureWS(t)
 	m := newTestModel(t, ws)
 	m.envName = ""
-	m = press(typeText(press(m, "4", "i"), secretCurl), "enter")
+	m = press(typeText(press(m, "4", "i"), secretCurl), "ctrl+s")
 	if s := m.scratch; s == nil || s.Auth.Password != "pw-xyz789" {
 		t.Fatalf("without an env the import should stay unsaved as is: %+v", s)
 	}
@@ -375,7 +375,7 @@ func TestScratchImportCurlWithoutEnv(t *testing.T) {
 func TestScratchImportCurlWithoutCollections(t *testing.T) {
 	ws := emptyWS(t)
 	m := newTestModel(t, ws)
-	m = press(typeText(press(m, "i"), `curl https://a.io/z -H 'Accept: text/plain'`), "enter")
+	m = press(typeText(press(m, "i"), `curl https://a.io/z -H 'Accept: text/plain'`), "ctrl+s")
 	if m.input() != nil {
 		t.Fatalf("no name dialog expected, input = %+v", m.input())
 	}

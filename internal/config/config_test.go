@@ -19,7 +19,7 @@ func writeConfig(t *testing.T, content string) string {
 }
 
 func TestLoadDefaults(t *testing.T) {
-	want := Config{Timeout: 30 * time.Second, Keybinds: DefaultKeymap()}
+	want := Config{Timeout: 30 * time.Second, History: 10, Keybinds: DefaultKeymap()}
 	for name, path := range map[string]string{
 		"missing": filepath.Join(t.TempDir(), "config.yaml"),
 		"empty":   writeConfig(t, ""),
@@ -32,11 +32,11 @@ func TestLoadDefaults(t *testing.T) {
 }
 
 func TestLoadFullFile(t *testing.T) {
-	got, err := Load(writeConfig(t, "workspace: /srv/ws\ntimeout: 5s\ninsecure: true\nkeybinds:\n  send: ctrl+r\n"))
+	got, err := Load(writeConfig(t, "workspace: /srv/ws\ntimeout: 5s\ninsecure: true\nhistory: 50\nkeybinds:\n  send: ctrl+r\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := Config{Workspace: "/srv/ws", Timeout: 5 * time.Second, Insecure: true, Keybinds: DefaultKeymap()}
+	want := Config{Workspace: "/srv/ws", Timeout: 5 * time.Second, Insecure: true, History: 50, Keybinds: DefaultKeymap()}
 	want.Keybinds.Send = Keys{"ctrl+r"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %+v, want %+v", got, want)
@@ -77,6 +77,7 @@ func TestLoadErrors(t *testing.T) {
 		"bad timeout":      {"timeout: soon\n", "soon"},
 		"zero timeout":     {"timeout: 0s\n", "timeout must be > 0"},
 		"negative timeout": {"timeout: -1s\n", "timeout must be > 0"},
+		"zero history":     {"history: 0\n", "history must be at least 1"},
 		"bad yaml":         {"workspace: [\n", "yaml"},
 		"keybind mapping":  {"keybinds:\n  send: {a: b}\n", "cannot unmarshal !!map"},
 		"unknown action":   {"keybinds:\n  sned: x\n", "field sned not found"},

@@ -30,6 +30,8 @@ type bodyEditor struct {
 	typ     workspace.BodyType
 	initial string
 	confirm *keyPrompt
+	title   string
+	onSave  func(Model, string) (Model, tea.Cmd)
 }
 
 func newBodyEditor(typ workspace.BodyType, content string, w, h int) *bodyEditor {
@@ -113,7 +115,10 @@ func (ed bodyEditor) lines(w, h int) []string {
 func (ed *bodyEditor) draw(m Model, screen string) string {
 	w, h := m.width, m.height
 	bw, bh := bodyEditorBox(w, h)
-	title := dialogEditBody + bodyTypeName(ed.typ) + ")"
+	title := ed.title
+	if title == "" {
+		title = dialogEditBody + bodyTypeName(ed.typ) + ")"
+	}
 	screen = centered(screen, box(title, ed.lines(bw-2-boxPad, bh-2), bw, bh, true), w, h, bw, bh)
 	if ed.confirm != nil {
 		screen = ed.confirm.draw(m, screen)
@@ -166,13 +171,18 @@ func (ed *bodyEditor) key(m Model, msg tea.KeyPressMsg) (Model, tea.Cmd) {
 }
 
 func (ed bodyEditor) bindings() []binding {
+	save := binding{keys: keys(&km.BodySave), run: func(m Model) (Model, tea.Cmd) {
+		return m.saveBodyEditor(ed)
+	}, help: "save the body", hint: "save"}
+	format := binding{keys: keys(&km.BodyFormat), run: func(m Model) (Model, tea.Cmd) {
+		return m.formatBodyEditor(ed), nil
+	}, help: "pretty-print JSON", hint: "format"}
+	if ed.onSave != nil {
+		save.hint, format = "import", binding{}
+	}
 	return []binding{
-		{keys: keys(&km.BodySave), run: func(m Model) (Model, tea.Cmd) {
-			return m.saveBodyEditor(ed), nil
-		}, help: "save the body", hint: "save"},
-		{keys: keys(&km.BodyFormat), run: func(m Model) (Model, tea.Cmd) {
-			return m.formatBodyEditor(ed), nil
-		}, help: "pretty-print JSON", hint: "format"},
+		save,
+		format,
 		{keys: keys(&km.BodyExternal), run: func(m Model) (Model, tea.Cmd) {
 			return m.externalBodyEditor(ed)
 		}, help: "continue in $EDITOR (still unsaved)", hint: "$EDITOR"},
@@ -197,16 +207,19 @@ func (m Model) feedBodyEditor(ed bodyEditor, msg tea.Msg) (Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) saveBodyEditor(ed bodyEditor) Model {
+func (m Model) saveBodyEditor(ed bodyEditor) (Model, tea.Cmd) {
+	if ed.onSave != nil {
+		return ed.onSave(m, ed.ta.Value())
+	}
 	m.overlay = nil
 	if !ed.changed() {
-		return m
+		return m, nil
 	}
-	return m.setBodyContent(ed.ta.Value())
+	return m.setBodyContent(ed.ta.Value()), nil
 }
 
 func (m Model) cancelBodyEditor(ed bodyEditor) Model {
-	if !ed.changed() {
+	if !ed.changed() || ed.onSave != nil {
 		m.overlay = nil
 		return m
 	}
