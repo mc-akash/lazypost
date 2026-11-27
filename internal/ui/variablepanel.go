@@ -100,6 +100,9 @@ func (m Model) editVar() Model {
 	if !ok {
 		return m
 	}
+	if m.highlightedEnv() == nil {
+		return m.createEnvThen(Model.editVar)
+	}
 	masked := m.masked(row)
 	initial := row.Value
 	if masked {
@@ -126,8 +129,7 @@ func (m Model) pasteVar() Model {
 		return m
 	}
 	if m.highlightedEnv() == nil {
-		m.status = statusNoEnv()
-		return m
+		return m.createEnvThen(Model.pasteVar)
 	}
 	target := vars.PlanWrite(row)
 	save := func(m Model, text string) Model {
@@ -171,8 +173,7 @@ func (m Model) toggleReveal() Model {
 
 func (m Model) addVar() Model {
 	if m.highlightedEnv() == nil {
-		m.status = statusNoEnv()
-		return m
+		return m.createEnvThen(Model.addVar)
 	}
 	in := newInput(dialogAddVar, "", submitAddName).withHint(hintVarName)
 	m.overlay = &in
@@ -290,8 +291,7 @@ func (m Model) toggleSecret() Model {
 func (m Model) saveVar(name, value string, target vars.WriteTarget) Model {
 	env := m.highlightedEnv()
 	if env == nil {
-		m.status = statusNoEnv()
-		return m
+		return m.createEnvThen(func(m Model) Model { return m.saveVar(name, value, target) })
 	}
 	err := m.commitEnv(env, func(nv, ns map[string]string) {
 		into, from := nv, ns
@@ -379,8 +379,4 @@ func tableRow(cells [3]string, cols [3]int) string {
 func padCell(s string, w int) string {
 	t := truncate(s, w)
 	return t + strings.Repeat(" ", max(0, w-displayCells(t)))
-}
-
-func statusNoEnv() string {
-	return "no environment — press " + km.New[0] + " in [1] to create one"
 }

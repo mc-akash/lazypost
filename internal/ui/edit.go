@@ -186,8 +186,7 @@ func (m Model) writeDraft() Model {
 		err = m.ws().SaveRequest(&req)
 	}
 	if err != nil {
-		m = m.fail(saveFailStatus("save failed: ", err))
-		return m
+		return m.saveFailed("save failed: ", err, Model.writeDraft)
 	}
 	*file = req
 	m = m.dropDraft(key)

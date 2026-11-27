@@ -224,13 +224,17 @@ func (p *listPicker) draw(m Model, screen string) string {
 }
 
 func (m Model) openEnvPicker() Model {
+	return m.pickEnvThen(func(m Model) Model { return m })
+}
+
+func (m Model) pickEnvThen(then func(Model) Model) Model {
 	names := make([]string, len(m.ws().Envs))
 	for i, e := range m.ws().Envs {
 		names[i] = e.Name
 	}
 	m.overlay = newListPicker(envPickerTitle, slashFilter, names, m.envName, "activate", func(m Model, name string) Model {
 		m.environments.cursor = indexOf(m.ws().Envs, name)
-		return m.activateEnv(name)
+		return then(m.activateEnv(name))
 	})
 	return m
 }

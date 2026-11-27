@@ -78,7 +78,7 @@ func (m Model) createImported(name string, imported workspace.Request) Model {
 	}
 	r, note, err := m.createRequest(parent, name, imported, env)
 	if err != nil {
-		return m.fail(saveFailStatus("create failed: ", err))
+		return m.fail("create failed: " + err.Error())
 	}
 	m.status = "created " + r.Name + note
 	m.collections = m.collections.reveal(m.ws().Collections, r.Path)

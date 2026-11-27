@@ -70,7 +70,7 @@ func TestSaveScratchRefusedWithoutEnv(t *testing.T) {
 	m = addHeader(t, m, "Authorization: Bearer tok-live-123")
 	m = submitInput(t, press(m, "W"), "billing/charge")
 
-	if m.Status() != statusSaveNeedsEnv() {
+	if p := m.picker(); p == nil || p.title != envPickerTitle {
 		t.Fatalf("status = %q", m.Status())
 	}
 	if after := requestFiles(t, ws); !slices.Equal(before, after) {
@@ -109,7 +109,7 @@ func TestWriteDraftRefusedWithoutEnv(t *testing.T) {
 	m = addHeader(t, press(m, "4"), "Authorization: Bearer tok-draft-9")
 	m = press(m, "w")
 
-	if m.Status() != statusSaveNeedsEnv() {
+	if p := m.picker(); p == nil || p.title != envPickerTitle {
 		t.Fatalf("status = %q", m.Status())
 	}
 	if readFile(t, path) != before {
@@ -139,8 +139,8 @@ func TestSaveAsDraftCredentials(t *testing.T) {
 		m.envName = ""
 		m = addHeader(t, press(m, "4"), "Cookie: sid=cookie-val-7")
 		m = submitInput(t, press(m, "W"), "orders/copy")
-		if m.Status() != statusSaveNeedsEnv() {
-			t.Fatalf("status = %q", m.Status())
+		if p := m.picker(); p == nil || p.title != envPickerTitle {
+			t.Fatalf("env picker not shown, status = %q", m.Status())
 		}
 		if after := requestFiles(t, ws); !slices.Equal(before, after) {
 			t.Fatalf("files written: %v", after)
@@ -243,7 +243,7 @@ func TestSaveMovesAuthTabCredentials(t *testing.T) {
 			m := draftWithAuth(t, ws, c.auth)
 			m.envName = ""
 			m = press(m, "w")
-			if m.Status() != statusSaveNeedsEnv() {
+			if p := m.picker(); p == nil || p.title != envPickerTitle {
 				t.Fatalf("status = %q", m.Status())
 			}
 			if readFile(t, path) != before {

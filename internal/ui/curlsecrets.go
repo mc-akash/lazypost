@@ -101,10 +101,6 @@ func literalCookie(v string) bool {
 
 var errSaveNeedsEnv = errors.New("save needs an environment")
 
-func statusSaveNeedsEnv() string {
-	return "credentials need an environment: activate one (" + km.SwitchEnv[0] + ") before saving"
-}
-
 func (m Model) routeSaveSecrets(req workspace.Request, name string) (workspace.Request, string, error) {
 	if !hasImportSecrets(req, name) {
 		return req, "", nil
@@ -116,11 +112,11 @@ func (m Model) routeSaveSecrets(req workspace.Request, name string) (workspace.R
 	return m.moveImportSecrets(req, name, env)
 }
 
-func saveFailStatus(prefix string, err error) string {
+func (m Model) saveFailed(prefix string, err error, retry func(Model) Model) Model {
 	if errors.Is(err, errSaveNeedsEnv) {
-		return statusSaveNeedsEnv()
+		return m.activeEnvThen(retry)
 	}
-	return prefix + err.Error()
+	return m.fail(prefix + err.Error())
 }
 
 func secretsNote(n int, env string) string {

@@ -39,6 +39,7 @@ const (
 	hintVarName   = "name"
 	hintKeepValue = "leave empty to keep the current value"
 	hintCurl      = "curl command"
+	hintEnvFirst  = "no environment yet: name one to continue"
 )
 
 func dialogWidth(w int) int {

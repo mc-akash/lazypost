@@ -110,8 +110,7 @@ func (m Model) submitScratchSaveAs(value string) Model {
 	}
 	created, note, err := m.saveNewRequest(folders, name, *m.scratch)
 	if err != nil {
-		m = m.fail(saveFailStatus("save as failed: ", err))
-		return m
+		return m.saveFailed("save as failed: ", err, func(m Model) Model { return m.submitScratchSaveAs(value) })
 	}
 	m = m.dropScratch()
 	m.lastLeft = PanelCollections

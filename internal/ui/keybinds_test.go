@@ -178,9 +178,6 @@ func TestKeybindSameKeyInSeparatePanels(t *testing.T) {
 
 func TestHintTextsFollowRebinds(t *testing.T) {
 	rebind(t, func(k *config.Keymap) { k.SwitchEnv = config.Keys{"X"}; k.EditURL = config.Keys{"U"} })
-	if got := saveFailStatus("save failed: ", errSaveNeedsEnv); !strings.Contains(got, "(X)") {
-		t.Fatalf("save status = %q", got)
-	}
 	ws := fixtureWS(t)
 	if out := newTestModel(t, ws).plainRender(); !strings.Contains(out, "U: set a URL") {
 		t.Fatalf("request panel hint not rebound:\n%s", out)

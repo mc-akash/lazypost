@@ -181,11 +181,16 @@ Saving a request (`w`, `W`) never writes a literal credential to its file:
 the Authorization and Cookie headers, and the Auth tab's bearer token,
 basic password and API key value, move into the active environment's
 secrets and the file keeps a `{{reference}}`. Values that are already
-references are left alone. With no active environment the save is refused.
+references are left alone. With no active environment, saving first asks
+you to pick one (or to name a new one when there are none), then saves.
 
 cURL import applies the same rule. With no active environment, imported
 credentials stay in the draft (or the unsaved request), which only the
 local state holds.
+
+History and the response view mask only the values of secret variables
+(`*.secret.yaml`, `secret.yaml`) as `••••`. A literal value typed into a
+request, such as a cookie or a token, is shown and kept in History as is.
 
 ## Keys
 
@@ -220,6 +225,10 @@ keys; every action can be rebound in the [config](#keybinds).
 | `n` / `d` | new / delete environment |
 
 ### Variables table
+
+Shown in place of `[4]` and titled `[V] Variables · <env>`: `V` opens it
+from any panel (`0` or `enter` from `[1]`). With no environment yet, adding,
+editing or pasting a variable first asks you to name one.
 
 | Key | Action |
 |---|---|

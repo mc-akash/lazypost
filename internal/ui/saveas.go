@@ -55,8 +55,7 @@ func (m Model) submitSaveAs(src, prefill, value string) Model {
 	}
 	created, note, err := m.saveNewRequest(folders, name, m.effective(file))
 	if err != nil {
-		m = m.fail(saveFailStatus("save as failed: ", err))
-		return m
+		return m.saveFailed("save as failed: ", err, func(m Model) Model { return m.submitSaveAs(src, prefill, value) })
 	}
 	m = m.dropDraft(m.draftKey(src))
 	m.collections = m.collections.reveal(m.ws().Collections, created.Path)

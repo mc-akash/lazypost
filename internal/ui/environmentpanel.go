@@ -112,6 +112,25 @@ func submitNewEnv(m Model, value string) (Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m Model) createEnvThen(then func(Model) Model) Model {
+	in := newInput(dialogNewEnv, "", func(m Model, v string) (Model, tea.Cmd) {
+		m, cmd := submitNewEnv(m, v)
+		if m.activeEnv() == nil {
+			return m, cmd
+		}
+		return then(m), cmd
+	}).withHint(hintEnvFirst)
+	m.overlay = &in
+	return m
+}
+
+func (m Model) activeEnvThen(then func(Model) Model) Model {
+	if len(m.ws().Envs) == 0 {
+		return m.createEnvThen(then)
+	}
+	return m.pickEnvThen(then)
+}
+
 func (m Model) deleteEnv(e *workspace.Env) Model {
 	if err := m.ws().DeleteEnv(e); err != nil {
 		m = m.fail("delete failed: " + err.Error())
