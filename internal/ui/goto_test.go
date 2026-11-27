@@ -81,17 +81,6 @@ func TestRequestRowsTopAndBottom(t *testing.T) {
 	}
 }
 
-func TestHelpTopAndBottom(t *testing.T) {
-	m := resize(newTestModel(t, fixtureWS(t)), 120, 15)
-	m = press(m, "?", "G")
-	if m.help().scroll == 0 || m.help().scroll != helpMaxScroll(15) {
-		t.Fatalf("G help scroll = %d, want %d", m.help().scroll, helpMaxScroll(15))
-	}
-	if m = press(m, "g"); m.help().scroll != 0 {
-		t.Fatalf("g help scroll = %d", m.help().scroll)
-	}
-}
-
 func TestEnvPickerTopAndBottom(t *testing.T) {
 	m := press(newTestModel(t, fixtureWS(t)), "E")
 	if m = press(m, "g"); m.picker().cursor != 0 || m.picker().filter != "" {

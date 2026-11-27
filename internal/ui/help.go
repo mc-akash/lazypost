@@ -4,7 +4,8 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
+
+	"github.com/mc-akash/lazypost/internal/config"
 )
 
 const (
@@ -15,102 +16,165 @@ const (
 
 type helpSection struct {
 	title    string
+	enter    func(Model) Model
 	bindings []binding
+}
+
+func focusOn(p Panel) func(Model) Model {
+	return func(m Model) Model { return m.setFocus(p) }
 }
 
 func helpSections() []helpSection {
 	m := Model{}
 	return []helpSection{
-		{"Global", m.globalBindings()},
-		{"Environments", m.envBindings()},
-		{"Variables", m.varsBindings()},
-		{"Collections", m.collectionsBindings()},
-		{"Request", m.requestBindings()},
-		{"Body editor", bodyEditor{}.bindings()},
-		{"Response", m.responseBindings()},
-		{"History", m.historyBindings()},
+		{"Global", func(m Model) Model { return m }, m.globalBindings()},
+		{"Environments", focusOn(PanelEnvs), m.envBindings()},
+		{"Variables", Model.jumpToVars, m.varsBindings()},
+		{"Collections", focusOn(PanelCollections), m.collectionsBindings()},
+		{"Request", focusOn(PanelRequest), m.requestBindings()},
+		{"Body editor", nil, bodyEditor{}.bindings()},
+		{"Response", focusOn(PanelResponse), m.responseBindings()},
+		{"History", focusOn(PanelHistory), m.historyBindings()},
 	}
 }
 
-func helpLines(spaced bool) []string {
-	var lines []string
-	for i, s := range helpSections() {
-		if i > 0 && spaced {
-			lines = append(lines, "")
-		}
-		lines = append(lines, strings.Repeat(" ", helpPadding-boxPad)+focusTitle.Render(s.title))
+type helpEntry struct {
+	section helpSection
+	b       binding
+}
+
+func (e helpEntry) runnable() bool { return e.section.enter != nil }
+
+func helpEntries(query string) []helpEntry {
+	q := strings.ToLower(query)
+	var out []helpEntry
+	for _, s := range helpSections() {
 		for _, b := range s.bindings {
 			if b.help == "" {
 				continue
 			}
-			k := b.keyText()
-			key := k + strings.Repeat(" ", max(1, helpKeyCol-len(k)))
-			lines = append(lines, strings.Repeat(" ", helpPadding-boxPad)+key+b.help)
+			text := strings.ToLower(s.title + "\n" + b.keyText() + "\n" + b.help)
+			if strings.Contains(text, q) {
+				out = append(out, helpEntry{s, b})
+			}
 		}
 	}
-	return lines
+	return out
 }
 
-const helpMore = "↓ more"
+type helpRow struct {
+	line  string
+	entry int
+}
 
-func helpBody(h int) []string {
-	if body := helpLines(true); len(body)+2 <= h {
-		return body
+func helpRows(entries []helpEntry) []helpRow {
+	var rows []helpRow
+	for i, e := range entries {
+		if i == 0 || entries[i-1].section.title != e.section.title {
+			rows = append(rows, helpRow{line: e.section.title, entry: -1})
+		}
+		k := e.b.keyText()
+		rows = append(rows, helpRow{line: k + strings.Repeat(" ", max(1, helpKeyCol-len(k))) + e.b.help, entry: i})
 	}
-	return helpLines(false)
+	return rows
 }
 
-func helpMaxScroll(h int) int {
-	return max(0, len(helpBody(h))-(h-2))
+type helpScreen struct {
+	query  string
+	cursor int
 }
-
-type helpScreen struct{ scroll int }
 
 func (hs *helpScreen) key(m Model, msg tea.KeyPressMsg) (Model, tea.Cmd) {
-	next, cmd, _ := dispatch(m, msg.String(), hs.bindings())
-	return next, cmd
+	if !config.IsText(msg.String()) {
+		if next, cmd, ok := dispatch(m, msg.String(), hs.bindings()); ok || msg.Text == "" {
+			return next, cmd
+		}
+	}
+	next := *hs
+	next.query, next.cursor = next.query+msg.Text, 0
+	m.overlay = &next
+	return m, nil
 }
 
 func (hs *helpScreen) bindings() []binding {
-	scroll := func(to func(Model) int) func(Model) (Model, tea.Cmd) {
+	n := len(helpEntries(hs.query))
+	set := func(f func(helpScreen) helpScreen) func(Model) (Model, tea.Cmd) {
 		return func(m Model) (Model, tea.Cmd) {
-			m.overlay = &helpScreen{scroll: to(m)}
+			next := f(*hs)
+			m.overlay = &next
 			return m, nil
 		}
 	}
-	return []binding{
-		{keys: keys(&km.Help, esc), run: noCmd(Model.closeOverlay), hint: "close"},
-		{keys: keys(&km.Quit), run: Model.quit},
-		{keys: keys(&km.NextItem), run: scroll(func(m Model) int { return min(hs.scroll+1, helpMaxScroll(m.height)) })},
-		{keys: keys(&km.PrevItem), run: scroll(func(Model) int { return max(hs.scroll-1, 0) })},
-		{keys: keys(&km.GotoTop), run: scroll(func(Model) int { return 0 })},
-		{keys: keys(&km.GotoBottom), run: scroll(func(m Model) int { return helpMaxScroll(m.height) })},
+	back := binding{keys: keys(esc, &km.Help), run: noCmd(Model.closeOverlay), hint: "close"}
+	if hs.query != "" {
+		back = binding{keys: keys(esc), run: set(func(helpScreen) helpScreen { return helpScreen{} }), hint: "clear search"}
 	}
+	return []binding{
+		{keys: keys(&fixed.Type), hint: "search"},
+		{keys: keys(enter), run: hs.run, hint: "run"},
+		back,
+		{keys: keys(&km.NextItem, &fixed.NextLine), run: set(func(h helpScreen) helpScreen { h.cursor = step(h.cursor, 1, n); return h })},
+		{keys: keys(&km.PrevItem, &fixed.PrevLine), run: set(func(h helpScreen) helpScreen { h.cursor = step(h.cursor, -1, n); return h })},
+		{keys: keys(&fixed.Backspace), run: set(func(h helpScreen) helpScreen {
+			if r := []rune(h.query); len(r) > 0 {
+				h.query, h.cursor = string(r[:len(r)-1]), 0
+			}
+			return h
+		})},
+	}
+}
+
+func (hs *helpScreen) run(m Model) (Model, tea.Cmd) {
+	entries := helpEntries(hs.query)
+	if len(entries) == 0 {
+		return m, nil
+	}
+	e := entries[clampCursor(hs.cursor, len(entries))]
+	if !e.runnable() {
+		return m, nil
+	}
+	next, cmd := e.section.enter(m.closeOverlay()).handleKey((*e.b.keys[0])[0])
+	return next.(Model), cmd
 }
 
 func (hs *helpScreen) hints(Model) []binding { return hinted(hs.bindings()) }
 
 func (hs *helpScreen) draw(m Model, screen string) string {
 	w, h := m.width, m.height
-	body := helpBody(h)
+	all := helpRows(helpEntries(""))
 	bw := helpPadding * 2
-	for _, l := range body {
-		bw = max(bw, boxPad+displayCells(l)+helpPadding)
+	for _, r := range all {
+		bw = max(bw, boxPad+displayCells(r.line)+helpPadding)
 	}
 	bw = min(bw+2, w)
-	rows := max(0, h-2)
-	scroll := max(0, min(hs.scroll, len(body)-rows))
-	visible := body[scroll:min(len(body), scroll+rows)]
-	bh := len(visible) + 2
-	fitted := make([]string, len(visible))
-	for i, l := range visible {
-		if room := bw - 2 - boxPad; displayCells(l) > room {
-			l = lipgloss.NewStyle().MaxWidth(room).Render(l)
+	bh := max(min(len(all)+3, h), 4)
+	room := bw - 2 - boxPad
+	indent := strings.Repeat(" ", helpPadding-boxPad)
+	lines := []string{truncate(pickerPrompt+cleanText(hs.query), room)}
+	entries := helpEntries(hs.query)
+	rows := helpRows(entries)
+	if len(rows) == 0 {
+		lines = append(lines, mutedStyle.Render(truncate(pickerNoMatch, room)))
+	}
+	cursor := clampCursor(hs.cursor, len(entries))
+	sel := 0
+	for i, r := range rows {
+		if r.entry == cursor {
+			sel = i
 		}
-		fitted[i] = l
 	}
-	if scroll+rows < len(body) && rows > 0 {
-		fitted[rows-1] = strings.Repeat(" ", helpPadding-boxPad) + mutedStyle.Render(helpMore)
+	start, end := listWindow(len(rows), sel, bh-3)
+	for _, r := range rows[start:end] {
+		switch {
+		case r.entry == cursor:
+			lines = append(lines, selectedRow(indent+r.line, room, true))
+		case r.entry < 0:
+			lines = append(lines, focusTitle.Render(truncate(indent+r.line, room)))
+		case !entries[r.entry].runnable():
+			lines = append(lines, mutedStyle.Render(truncate(indent+r.line, room)))
+		default:
+			lines = append(lines, truncate(indent+r.line, room))
+		}
 	}
-	return centered(screen, box(helpTitle, fitted, bw, bh, true), w, h, bw, bh)
+	return centered(screen, box(helpTitle, lines, bw, bh, true), w, h, bw, bh)
 }

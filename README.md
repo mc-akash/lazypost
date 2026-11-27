@@ -44,7 +44,8 @@ CGO_ENABLED=0 go build -o lazypost ./cmd/lazypost
    shows in `[5]`.
 3. Press `w` to keep the request in a collection (e.g. `users/get user`).
 
-Press `?` at any time for every key.
+Press `?` at any time for every key. Type to search it by key or
+description, then `enter` runs the selected action.
 
 ## Screen
 
@@ -207,7 +208,7 @@ keys; every action can be rebound in the [config](#keybinds).
 | `V` | variables of the active environment |
 | `R` | reload the workspace from disk (drafts and selection are kept) |
 | `esc` | cancel the running send; else back to the side panel |
-| `?` | all keys |
+| `?` | all keys: type to search, `↑`/`↓` move, `enter` runs the action in its panel, `esc` clears the search or closes |
 | `q` / `ctrl+c` | quit (drafts are kept) |
 
 ### [1] Environments
@@ -379,9 +380,9 @@ help screen (`?`) and the bottom line show the first key of each list.
 | `reveal` | `r` | variables table |
 | `toggle_secret` | `S` | variables table |
 
-While you type (dialogs, filtering pickers, the header picker, the
-body editor) a single character is text, so only the non-character keys of
-a list work there: with `next_item: [x, down]`, `x` is typed and `down`
+While you type (dialogs, filtering pickers, the header picker, the help
+screen, the body editor) a single character is text, so only the
+non-character keys of a list work there: with `next_item: [x, down]`, `x` is typed and `down`
 moves. That is why `force_quit`, `return`, `confirm`, `body_save`,
 `body_format` and `body_external` can't use a character key.
 

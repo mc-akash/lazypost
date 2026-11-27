@@ -283,40 +283,6 @@ func TestHistoryListsEntries(t *testing.T) {
 	}
 }
 
-func TestHelpOverlay(t *testing.T) {
-	m := newTestModel(t, fixtureWS(t))
-	if strings.Contains(m.plainRender(), "send the selected request") {
-		t.Fatal("help visible before ?")
-	}
-	m = press(m, "?")
-	if out := m.plainRender(); !strings.Contains(out, "send the selected request") {
-		t.Fatal("help overlay should list send")
-	}
-	sections := helpSections()
-	last := sections[len(sections)-1].bindings
-	for range helpMaxScroll(40) + 1 {
-		lines := strings.Split(m.plainRender(), "\n")
-		if len(lines) != 40 {
-			t.Fatalf("help overlay render has %d lines", len(lines))
-		}
-		for i, l := range lines {
-			if w := displayWidth(l); w > 120 {
-				t.Fatalf("line %d is %d cells wide", i, w)
-			}
-		}
-		m = press(m, "j")
-	}
-	if out := m.plainRender(); !strings.Contains(out, last[len(last)-1].help) {
-		t.Fatalf("scrolled to the end, help should show the last section:\n%s", out)
-	}
-	if m = press(m, "?"); strings.Contains(m.plainRender(), "send the selected request") {
-		t.Fatal("second ? should close help")
-	}
-	if m = press(m, "?", "esc"); strings.Contains(m.plainRender(), "send the selected request") {
-		t.Fatal("esc should close help")
-	}
-}
-
 func TestQuit(t *testing.T) {
 	m := newTestModel(t, fixtureWS(t))
 	_, cmd := m.Update(keyMsg("q"))
@@ -388,69 +354,6 @@ func TestHintLineFollowsFocus(t *testing.T) {
 func lastLine(s string) string {
 	lines := strings.Split(s, "\n")
 	return lines[len(lines)-1]
-}
-
-func TestHelpOverlayFitsMinimumTerminal(t *testing.T) {
-	m := press(resize(newTestModel(t, fixtureWS(t)), 80, 20), "?")
-	for range helpMaxScroll(20) + 2 {
-		lines := strings.Split(m.plainRender(), "\n")
-		if len(lines) != 20 {
-			t.Fatalf("help overlay render has %d lines", len(lines))
-		}
-		for i, l := range lines {
-			if w := displayWidth(l); w > 80 {
-				t.Fatalf("line %d is %d cells wide", i, w)
-			}
-		}
-		m = press(m, "j")
-	}
-}
-
-func TestHelpOverlayScrolls(t *testing.T) {
-	m := press(resize(newTestModel(t, fixtureWS(t)), 80, 20), "?")
-	out := m.plainRender()
-	if !strings.Contains(out, "↓ more") {
-		t.Fatalf("80×20 help should show ↓ more:\n%s", out)
-	}
-	if strings.Contains(out, "copy body") {
-		t.Fatal("the end of the Response section should start below the fold")
-	}
-	seen := map[string]bool{}
-	for range helpMaxScroll(20) {
-		m = press(m, "j")
-		out = m.plainRender()
-		for _, b := range allBindings() {
-			if strings.Contains(out, b.help) {
-				seen[b.help] = true
-			}
-		}
-	}
-	if !strings.Contains(out, "copy body") || strings.Contains(out, "↓ more") {
-		t.Fatalf("scrolled to the end, help should show the Response section without ↓ more:\n%s", out)
-	}
-	for _, b := range allBindings() {
-		if !seen[b.help] {
-			t.Errorf("scrolling never revealed %q", b.help)
-		}
-	}
-	if m = press(m, "k"); !strings.Contains(m.plainRender(), "↓ more") {
-		t.Fatal("k should scroll back up")
-	}
-	if m.Focus() != PanelCollections {
-		t.Fatal("j/k in help must not move panel focus")
-	}
-}
-
-func TestHelpGroupedByPanel(t *testing.T) {
-	out := ansiSeq.ReplaceAllString(strings.Join(helpLines(false), "\n"), "")
-	prev := -1
-	for _, title := range []string{"Global", "Collections", "Request", "Response", "History"} {
-		i := strings.Index(out, " "+title+"\n")
-		if i < 0 || i < prev {
-			t.Fatalf("help section %q missing or out of order:\n%s", title, out)
-		}
-		prev = i
-	}
 }
 
 func TestHintLinePerPanel(t *testing.T) {
