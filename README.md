@@ -1,5 +1,7 @@
 # lazypost
 
+[![test](https://github.com/mc-akash/lazypost/actions/workflows/test.yml/badge.svg)](https://github.com/mc-akash/lazypost/actions/workflows/test.yml)
+
 A terminal HTTP client with the feel of lazygit: panels side by side, vim
 navigation, single-key actions. Built for the daily loop of picking a
 request, sending it and reading the response, switching environments and

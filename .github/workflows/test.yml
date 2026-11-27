@@ -1,0 +1,52 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 10
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          go_version_file: go.mod
+          fail_level: any
+      - uses: gwatts/go-coverage-action@v2
+        id: coverage
+        with:
+          coverage-threshold: 80
+          cover-pkg: ./...
+          test-args: '["-race"]'
+          report-url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always() && steps.coverage.outputs.report-pathname != ''
+        with:
+          name: coverage-report.html
+          path: ${{ steps.coverage.outputs.report-pathname }}
+      - name: Update coverage badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        if: github.event_name == 'push' && github.ref_name == 'main' && vars.COVERAGE_GIST_ID != ''
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ vars.COVERAGE_GIST_ID }}
+          filename: lazypost-coverage.json
+          label: coverage
+          message: ${{ steps.coverage.outputs.coverage-pct-1dp }}%
+          color: ${{ steps.coverage.outputs.meets-threshold == 'true' && 'green' || 'red' }}
