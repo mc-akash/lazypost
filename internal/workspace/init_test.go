@@ -92,7 +92,9 @@ func TestInitIsIdempotentAndKeepsUserGitignore(t *testing.T) {
 
 func TestInitGitignoreWithoutTrailingNewline(t *testing.T) {
 	root := t.TempDir()
-	os.WriteFile(filepath.Join(root, ".gitignore"), []byte("a"), 0o644)
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("a"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := Init(root); err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +106,9 @@ func TestInitGitignoreWithoutTrailingNewline(t *testing.T) {
 
 func TestInitAddsRootSecretPatternToOldGitignore(t *testing.T) {
 	root := t.TempDir()
-	os.WriteFile(filepath.Join(root, ".gitignore"), []byte("*.secret.yaml\nsecret.yaml\n"), 0o644)
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("*.secret.yaml\nsecret.yaml\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := Init(root); err != nil {
 		t.Fatal(err)
 	}

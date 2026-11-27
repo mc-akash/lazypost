@@ -319,7 +319,7 @@ func TestSaveAsSecretsCommittedOnlyAfterRequestFile(t *testing.T) {
 	if err := os.Chmod(users, 0o500); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.Chmod(users, 0o755) })
+	t.Cleanup(func() { _ = os.Chmod(users, 0o755) })
 	m = submitInput(t, press(m, "W"), "users/charge")
 	if !strings.HasPrefix(m.Status(), "save as failed: ") {
 		t.Fatalf("status = %q", m.Status())

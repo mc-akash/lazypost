@@ -219,7 +219,7 @@ func TestLoadRecordsUnreadableSubfolder(t *testing.T) {
 	if err := os.Chmod(locked, 0o000); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.Chmod(locked, 0o755) })
+	t.Cleanup(func() { _ = os.Chmod(locked, 0o755) })
 	ws, err := Load(root)
 	if err != nil {
 		t.Fatal(err)

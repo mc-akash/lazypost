@@ -1,0 +1,11 @@
+version: "2"
+
+linters:
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintln
+        - os.Remove
+        - (*os.File).Close
+        - (io.Closer).Close
+        - (io.ReadCloser).Close

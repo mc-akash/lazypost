@@ -131,7 +131,9 @@ func TestCorruptLineSkipped(t *testing.T) {
 	if _, err := f.WriteString("{not json\n\n"); err != nil {
 		t.Fatal(err)
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 	if err := s.Append(entry(2)); err != nil {
 		t.Fatal(err)
 	}
