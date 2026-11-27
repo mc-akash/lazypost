@@ -17,6 +17,13 @@ history store.
 brew install mc-akash/tap/lazypost
 ```
 
+On Windows, with [Scoop](https://scoop.sh):
+
+```powershell
+scoop bucket add mc-akash https://github.com/mc-akash/scoop-bucket
+scoop install lazypost
+```
+
 or download a binary from the
 [releases page](https://github.com/mc-akash/lazypost/releases), or
 

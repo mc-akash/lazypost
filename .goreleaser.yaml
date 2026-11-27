@@ -9,6 +9,7 @@ builds:
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
@@ -16,6 +17,12 @@ builds:
       - -trimpath
     ldflags:
       - -s -w -X main.buildVersion=v{{ .Version }}
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
 
 homebrew_casks:
   - repository:
@@ -30,3 +37,12 @@ homebrew_casks:
           on_macos do
             run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/lazypost"]
           end
+
+scoops:
+  - repository:
+      owner: mc-akash
+      name: scoop-bucket
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/mc-akash/lazypost
+    description: Lazygit-style terminal HTTP client
+    license: MIT
