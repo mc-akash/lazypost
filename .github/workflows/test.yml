@@ -32,6 +32,7 @@ jobs:
         with:
           coverage-threshold: 80
           cover-pkg: ./...
+          cover-mode: atomic
           test-args: '["-race"]'
           report-url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts
       - name: Upload coverage report
