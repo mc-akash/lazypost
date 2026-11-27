@@ -46,7 +46,7 @@ func dialogWidth(w int) int {
 	return min(w, max(dialogMinWidth, min(dialogMaxWidth, w*dialogPercent/100)))
 }
 
-func dialog(screen string, w, h int, title string, lines func(int) []string) string {
+func renderDialog(screen string, w, h int, title string, lines func(int) []string) string {
 	bw := dialogWidth(w)
 	body := lines(bw - 2 - boxPad)
 	bh := min(len(body)+2, h)

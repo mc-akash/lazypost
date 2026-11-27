@@ -18,9 +18,9 @@ func (m Model) jumpEdge(bottom bool) Model {
 		m.history.cursor = edge(len(m.history.entries), bottom)
 		m.onScratch = false
 	case PanelVars:
-		m.variables.cursor = edge(len(m.varRows()), bottom)
+		m.variables.cursor = edge(len(m.varsRows()), bottom)
 	case PanelRequest:
-		m.request.row = edge(m.reqRowCount(), bottom)
+		m.request.row = edge(m.requestRowCount(), bottom)
 	}
 	return m
 }

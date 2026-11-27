@@ -34,7 +34,7 @@ func (p historyPanel) add(e history.Entry, selectNew bool, limit int) historyPan
 }
 
 func (p historyPanel) move(delta int) historyPanel {
-	p.cursor = step(p.cursor, delta, len(p.entries))
+	p.cursor = clampStep(p.cursor, delta, len(p.entries))
 	return p
 }
 

@@ -50,13 +50,13 @@ func (m Model) selectScratch() Model {
 }
 
 func (m Model) editHistoryCopy(tmpl workspace.Request) (Model, bool) {
-	if m.scratch == nil || sameContent(*m.scratch, tmpl) {
+	if m.scratch == nil || sameIgnoringName(*m.scratch, tmpl) {
 		m = m.storeScratch(tmpl)
 		m.onScratch = true
 		return m, true
 	}
 	key := m.lastKey
-	m.overlay = confirm(dialogReplaceScratch, msgReplaceScratch, statusScratchKept, func(m Model) (Model, tea.Cmd) {
+	m.overlay = newConfirm(dialogReplaceScratch, msgReplaceScratch, statusScratchKept, func(m Model) (Model, tea.Cmd) {
 		m = m.storeScratch(tmpl)
 		m.onScratch = true
 		next, cmd := m.handleKey(key)
@@ -65,7 +65,7 @@ func (m Model) editHistoryCopy(tmpl workspace.Request) (Model, bool) {
 	return m, false
 }
 
-func sameContent(a, b workspace.Request) bool {
+func sameIgnoringName(a, b workspace.Request) bool {
 	a, b = cloneRequest(a), cloneRequest(b)
 	a.Name, a.Path, a.Parent = "", "", nil
 	b.Name, b.Path, b.Parent = "", "", nil
@@ -123,7 +123,7 @@ func (m Model) importIntoScratch(imported workspace.Request) Model {
 	if m.scratch == nil {
 		return m.replaceScratch(imported)
 	}
-	m.overlay = confirm(dialogReplaceScratch, msgImportScratch, statusScratchKept, func(m Model) (Model, tea.Cmd) {
+	m.overlay = newConfirm(dialogReplaceScratch, msgImportScratch, statusScratchKept, func(m Model) (Model, tea.Cmd) {
 		return m.replaceScratch(imported), nil
 	})
 	return m

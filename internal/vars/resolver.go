@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -129,7 +130,7 @@ func (e *expansion) expand(s string, stack []string) string {
 		if ok && src == SrcBuiltin {
 			return v
 		}
-		if !ok || len(stack) >= maxDepth || contains(stack, name) {
+		if !ok || len(stack) >= maxDepth || slices.Contains(stack, name) {
 			if !e.seen[name] {
 				e.seen[name] = true
 				e.missing = append(e.missing, name)
@@ -138,15 +139,6 @@ func (e *expansion) expand(s string, stack []string) string {
 		}
 		return e.expand(v, append(stack[:len(stack):len(stack)], name))
 	})
-}
-
-func contains(list []string, s string) bool {
-	for _, x := range list {
-		if x == s {
-			return true
-		}
-	}
-	return false
 }
 
 func (r *Resolver) SecretValues() []string {

@@ -22,7 +22,7 @@ func newEnvironmentPanel(envs []*workspace.Env, active string) environmentPanel 
 }
 
 func (p environmentPanel) move(delta, n int) environmentPanel {
-	p.cursor = step(p.cursor, delta, n)
+	p.cursor = clampStep(p.cursor, delta, n)
 	return p
 }
 

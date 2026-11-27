@@ -39,8 +39,8 @@ func TestHeaderPickerAcceptJSON(t *testing.T) {
 	if got := lastHeader(t, m); got != (workspace.KV{Key: "Accept", Value: "application/json"}) {
 		t.Fatalf("header = %+v", got)
 	}
-	if m.reqRow() != len(currentTmpl(m).Headers)-1 {
-		t.Fatalf("new row not selected: row %d", m.reqRow())
+	if m.requestRow() != len(currentTmpl(m).Headers)-1 {
+		t.Fatalf("new row not selected: row %d", m.requestRow())
 	}
 	if !strings.Contains(m.plainRender(), "[4] Request ●") {
 		t.Fatal("draft marker missing")

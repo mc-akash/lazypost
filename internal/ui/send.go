@@ -103,7 +103,7 @@ func (m Model) rowSelection() (selection, bool) {
 	switch m.lastLeft {
 	case PanelCollections:
 		if row, ok := m.collections.selected(m.ws().Collections); ok && row.req != nil {
-			return selection{file: row.req, tmpl: m.effective(row.req), path: row.req.Path}, true
+			return selection{file: row.req, tmpl: m.withDraft(row.req), path: row.req.Path}, true
 		}
 	case PanelHistory:
 		if e, ok := m.history.selected(); ok {

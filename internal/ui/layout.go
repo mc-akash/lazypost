@@ -71,7 +71,7 @@ func (m Model) Render() string {
 	hw, hh := inner(g.leftW, g.histH)
 	left := strings.Join([]string{
 		box("[1] Environments", m.environments.render(ws.Envs, m.envName, ew, eh, m.focus == PanelEnvs), g.leftW, g.envH, m.focus == PanelEnvs),
-		box("[2] Collections", m.collections.render(ws.Collections, cw, ch, m.focus == PanelCollections, m.treeDecor), g.leftW, g.collH, m.focus == PanelCollections),
+		box("[2] Collections", m.collections.render(ws.Collections, cw, ch, m.focus == PanelCollections, m.treeRowMarks), g.leftW, g.collH, m.focus == PanelCollections),
 		box("[3] History", m.history.render(time.Now(), hw, hh, m.focus == PanelHistory), g.leftW, g.histH, m.focus == PanelHistory),
 	}, "\n")
 	var right string
@@ -201,7 +201,7 @@ func clampCursor(c, n int) int {
 	return max(0, min(c, n-1))
 }
 
-func step(cur, delta, n int) int { return clampCursor(clampCursor(cur, n)+delta, n) }
+func clampStep(cur, delta, n int) int { return clampCursor(clampCursor(cur, n)+delta, n) }
 
 func listWindow(n, cursor, h int) (int, int) {
 	if h <= 0 || n == 0 {

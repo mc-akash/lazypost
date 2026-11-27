@@ -58,7 +58,7 @@ func TestHistoryTopAndBottom(t *testing.T) {
 
 func TestVarsTopAndBottom(t *testing.T) {
 	m := press(newTestModel(t, fixtureWS(t)), "V")
-	rows := m.varRows()
+	rows := m.varsRows()
 	if m = press(m, "G"); m.variables.cursor != len(rows)-1 {
 		t.Fatalf("G cursor = %d, want %d", m.variables.cursor, len(rows)-1)
 	}
@@ -73,11 +73,11 @@ func TestRequestRowsTopAndBottom(t *testing.T) {
 		r.Headers = []workspace.KV{{Key: "A"}, {Key: "B"}, {Key: "C"}}
 	})
 	m = press(m, "4")
-	if m = press(m, "G"); m.reqRow() != 2 {
-		t.Fatalf("G row = %d", m.reqRow())
+	if m = press(m, "G"); m.requestRow() != 2 {
+		t.Fatalf("G row = %d", m.requestRow())
 	}
-	if m = press(m, "g"); m.reqRow() != 0 {
-		t.Fatalf("g row = %d", m.reqRow())
+	if m = press(m, "g"); m.requestRow() != 0 {
+		t.Fatalf("g row = %d", m.requestRow())
 	}
 }
 

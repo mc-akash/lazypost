@@ -77,7 +77,7 @@ func (in *inputModel) draw(m Model, screen string) string {
 		lines[len(lines)-footerLines] = " " + in.view(m.width-1)
 		return strings.Join(lines, "\n")
 	}
-	return dialog(screen, m.width, m.height, in.title, in.dialogLines)
+	return renderDialog(screen, m.width, m.height, in.title, in.dialogLines)
 }
 
 func (in *inputModel) hints(m Model) []binding {
@@ -108,7 +108,7 @@ func (p *keyPrompt) key(m Model, msg tea.KeyPressMsg) (Model, tea.Cmd) {
 }
 
 func (p *keyPrompt) draw(m Model, screen string) string {
-	return dialog(screen, m.width, m.height, p.title, p.dialogLines)
+	return renderDialog(screen, m.width, m.height, p.title, p.dialogLines)
 }
 
 func (p *keyPrompt) hints(Model) []binding { return hinted(p.bindings) }
@@ -141,7 +141,7 @@ func (m Model) showError(msg string) Model {
 	return m
 }
 
-func confirm(title, msg, noStatus string, onYes func(Model) (Model, tea.Cmd)) *keyPrompt {
+func newConfirm(title, msg, noStatus string, onYes func(Model) (Model, tea.Cmd)) *keyPrompt {
 	no := func(m Model) (Model, tea.Cmd) {
 		if noStatus != "" {
 			m.status = noStatus
@@ -156,7 +156,7 @@ func confirm(title, msg, noStatus string, onYes func(Model) (Model, tea.Cmd)) *k
 }
 
 func (m Model) confirmDelete(title, name string, del func(Model) Model) Model {
-	m.overlay = confirm(title, `Delete "`+name+`"?`, "delete cancelled", func(m Model) (Model, tea.Cmd) {
+	m.overlay = newConfirm(title, `Delete "`+name+`"?`, "delete cancelled", func(m Model) (Model, tea.Cmd) {
 		return del(m), nil
 	})
 	return m

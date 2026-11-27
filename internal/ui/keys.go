@@ -25,7 +25,7 @@ func ApplyKeybinds(k config.Keymap) error {
 	return nil
 }
 
-func is(key string, k config.Keys) bool { return slices.Contains(k, key) }
+func isKey(key string, k config.Keys) bool { return slices.Contains(k, key) }
 
 type binding struct {
 	keys []*config.Keys
@@ -37,7 +37,7 @@ type binding struct {
 func dispatch(m Model, key string, bs []binding) (Model, tea.Cmd, bool) {
 	m.lastKey = key
 	for _, b := range bs {
-		if b.run != nil && slices.ContainsFunc(b.keys, func(k *config.Keys) bool { return k == &fixed.Any || is(key, *k) }) {
+		if b.run != nil && slices.ContainsFunc(b.keys, func(k *config.Keys) bool { return k == &fixed.Any || isKey(key, *k) }) {
 			next, cmd := b.run(m)
 			return next, cmd, true
 		}
@@ -50,7 +50,7 @@ func noCmd(f func(Model) Model) func(Model) (Model, tea.Cmd) {
 }
 
 func direction(key string, forward config.Keys) int {
-	if is(key, forward) {
+	if isKey(key, forward) {
 		return 1
 	}
 	return -1

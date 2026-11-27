@@ -125,7 +125,7 @@ func (m Model) appendHeader(name, value string) Model {
 	m = m.editRequest(func(r *workspace.Request) {
 		r.Headers = append(r.Headers, workspace.KV{Key: name, Value: value})
 	})
-	m.request.row = m.reqRowCount() - 1
+	m.request.row = m.requestRowCount() - 1
 	return m
 }
 

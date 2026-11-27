@@ -83,19 +83,19 @@ func (m Model) currentResponse() respData {
 	}
 	key := sel.key()
 	if r, ok := m.results[key]; ok {
-		d := resultData(key, r)
+		d := respDataFromResult(key, r)
 		if r.phase == phaseSending {
 			d.title = m.spin.View() + " " + d.title
 		}
 		return d
 	}
 	if sel.entry != nil {
-		return entryData(key, *sel.entry)
+		return respDataFromEntry(key, *sel.entry)
 	}
 	return respData{}
 }
 
-func resultData(key string, r sendResult) respData {
+func respDataFromResult(key string, r sendResult) respData {
 	switch {
 	case r.phase == phaseSending:
 		return respData{key: key, title: "sending… (" + km.Return[0] + " to cancel)"}
@@ -112,7 +112,7 @@ func resultData(key string, r sendResult) respData {
 	}
 }
 
-func entryData(key string, e history.Entry) respData {
+func respDataFromEntry(key string, e history.Entry) respData {
 	if e.Err != "" {
 		return respData{key: key, title: titleError, err: e.Err}
 	}
@@ -129,14 +129,14 @@ func entryData(key string, e history.Entry) respData {
 	}
 }
 
-func (m Model) respViewFor(d respData) responsePanel {
+func (m Model) responseViewFor(d respData) responsePanel {
 	if m.response.key != d.key {
 		return responsePanel{key: d.key, tab: m.response.tab}
 	}
 	return m.response
 }
 
-func (m Model) respLines(d respData, tab int) []string {
+func (m Model) responseLines(d respData, tab int) []string {
 	if d.title == "" {
 		return nil
 	}
@@ -182,7 +182,7 @@ func cookieLines(h http.Header) []string {
 	return out
 }
 
-func (m Model) respRows() int {
+func (m Model) responseRows() int {
 	g := computeGeometry(m.width, m.height, len(m.ws().Envs))
 	return max(1, g.respH-borderLines-respTabLines)
 }
@@ -191,8 +191,8 @@ func (m Model) responseBody(d respData, w, h int) []string {
 	if d.title == "" {
 		return nil
 	}
-	v := m.respViewFor(d)
-	lines := m.respLines(d, v.tab)
+	v := m.responseViewFor(d)
+	lines := m.responseLines(d, v.tab)
 	rows := max(0, h-respTabLines)
 	start := max(0, min(v.scroll, len(lines)-rows))
 	out := []string{tabBar(respTabs, v.tab, w)}
@@ -221,7 +221,7 @@ func (Model) responseBindings() []binding {
 			return m, v
 		}), help: "search", hint: "search"},
 		{keys: keys(&km.NextMatch, &km.PrevMatch), run: scrollResp(func(m Model, v responsePanel, rows int) (Model, responsePanel) {
-			return m, v.step(is(m.lastKey, km.NextMatch), rows)
+			return m, v.pageScroll(isKey(m.lastKey, km.NextMatch), rows)
 		}), help: "next / previous match", hint: "next/prev"},
 		{keys: keys(&km.CopyBody), run: func(m Model) (Model, tea.Cmd) {
 			return m.copyBody(m.currentResponse())
@@ -241,8 +241,8 @@ func (Model) responseBindings() []binding {
 		}), help: "half page down / up"},
 		{keys: keys(&km.GotoTop, &km.GotoBottom), run: scrollResp(func(m Model, v responsePanel, _ int) (Model, responsePanel) {
 			v.scroll = 0
-			if is(m.lastKey, km.GotoBottom) {
-				v.scroll = len(m.respLines(m.currentResponse(), v.tab))
+			if isKey(m.lastKey, km.GotoBottom) {
+				v.scroll = len(m.responseLines(m.currentResponse(), v.tab))
 			}
 			return m, v
 		})},
@@ -252,15 +252,15 @@ func (Model) responseBindings() []binding {
 func scrollResp(f func(m Model, v responsePanel, rows int) (Model, responsePanel)) func(Model) (Model, tea.Cmd) {
 	return func(m Model) (Model, tea.Cmd) {
 		d := m.currentResponse()
-		rows := m.respRows()
-		m, v := f(m, m.respViewFor(d), rows)
-		v.scroll = max(0, min(v.scroll, max(0, len(m.respLines(d, v.tab))-rows)))
+		rows := m.responseRows()
+		m, v := f(m, m.responseViewFor(d), rows)
+		v.scroll = max(0, min(v.scroll, max(0, len(m.responseLines(d, v.tab))-rows)))
 		m.response = v
 		return m, nil
 	}
 }
 
-func (v responsePanel) step(forward bool, rows int) responsePanel {
+func (v responsePanel) pageScroll(forward bool, rows int) responsePanel {
 	n := len(v.matches)
 	if n == 0 {
 		return v
@@ -283,9 +283,9 @@ func reveal(line, scroll, rows int) int {
 
 func submitSearch(m Model, query string) (Model, tea.Cmd) {
 	d := m.currentResponse()
-	v := m.respViewFor(d)
-	lines := m.respLines(d, v.tab)
-	rows := m.respRows()
+	v := m.responseViewFor(d)
+	lines := m.responseLines(d, v.tab)
+	rows := m.responseRows()
 	v.matches = bodyview.Search(lines, query)
 	if len(v.matches) == 0 {
 		m.response = v

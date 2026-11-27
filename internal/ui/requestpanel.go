@@ -76,11 +76,11 @@ func (m Model) requestBindings() []binding {
 			return m, nil
 		}, help: "previous / next tab"},
 		{keys: tabs, run: func(m Model) (Model, tea.Cmd) {
-			m.request = requestPanel{tab: slices.IndexFunc(tabs, func(k *config.Keys) bool { return is(m.lastKey, *k) })}
+			m.request = requestPanel{tab: slices.IndexFunc(tabs, func(k *config.Keys) bool { return isKey(m.lastKey, *k) })}
 			return m, nil
 		}, help: "Headers / Body / Auth / Params tab"},
 		{keys: listMoves, run: func(m Model) (Model, tea.Cmd) {
-			return m.moveReqRow(direction(m.lastKey, km.NextItem)), nil
+			return m.moveRequestRow(direction(m.lastKey, km.NextItem)), nil
 		}, help: "select row"},
 		{keys: keys(&km.Add, &km.Delete), help: "add (header picker on Headers) / delete row"},
 	}
@@ -139,7 +139,7 @@ func (m Model) requestLines(w int) []string {
 	if sel.entry != nil || len(rows) == 0 {
 		return lines
 	}
-	cur := m.reqRow()
+	cur := m.requestRow()
 	if m.focus == PanelRequest && cur < len(rows) {
 		lines[headerRows+cur] = selectedRow(cleanText(rows[cur]), w, true)
 	}

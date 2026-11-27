@@ -144,7 +144,7 @@ func (m Model) openBodyEditor() Model {
 	if !ok {
 		return m
 	}
-	req, _, ok := m.editable()
+	req, _, ok := m.editableRequest()
 	if !ok {
 		return m
 	}
@@ -223,7 +223,7 @@ func (m Model) cancelBodyEditor(ed bodyEditor) Model {
 		m.overlay = nil
 		return m
 	}
-	ed.confirm = confirm(dialogDiscardBody, msgDiscardBody, "", func(m Model) (Model, tea.Cmd) {
+	ed.confirm = newConfirm(dialogDiscardBody, msgDiscardBody, "", func(m Model) (Model, tea.Cmd) {
 		m.overlay = nil
 		return m, nil
 	})
@@ -280,7 +280,7 @@ func (m Model) formatBody() Model {
 	if !ok {
 		return m
 	}
-	req, _, ok := m.editable()
+	req, _, ok := m.editableRequest()
 	if !ok {
 		return m
 	}

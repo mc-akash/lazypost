@@ -41,7 +41,7 @@ func (m Model) editTarget() (*workspace.Request, bool) {
 }
 
 func (m Model) requireEditable() (Model, bool) {
-	if _, _, ok := m.editable(); ok {
+	if _, _, ok := m.editableRequest(); ok {
 		return m, true
 	}
 	sel, selected := m.selection()
@@ -59,7 +59,7 @@ func (m Model) requireEditable() (Model, bool) {
 	return m, false
 }
 
-func (m Model) editable() (req workspace.Request, file *workspace.Request, ok bool) {
+func (m Model) editableRequest() (req workspace.Request, file *workspace.Request, ok bool) {
 	if m.scratchSelected() {
 		return cloneRequest(*m.scratch), nil, true
 	}
@@ -67,7 +67,7 @@ func (m Model) editable() (req workspace.Request, file *workspace.Request, ok bo
 	if !ok {
 		return workspace.Request{}, nil, false
 	}
-	return m.effective(file), file, true
+	return m.withDraft(file), file, true
 }
 
 func (m Model) storeEdit(file *workspace.Request, req workspace.Request) Model {
@@ -77,7 +77,7 @@ func (m Model) storeEdit(file *workspace.Request, req workspace.Request) Model {
 	return m.storeDraft(file, req)
 }
 
-func (m Model) effective(file *workspace.Request) workspace.Request {
+func (m Model) withDraft(file *workspace.Request) workspace.Request {
 	r := *file
 	if d, ok := m.drafts[m.draftKey(file.Path)]; ok {
 		r = d.Request
@@ -95,7 +95,7 @@ func cloneRequest(r workspace.Request) workspace.Request {
 }
 
 func (m Model) editRequest(fn func(*workspace.Request)) Model {
-	req, file, ok := m.editable()
+	req, file, ok := m.editableRequest()
 	if !ok {
 		m.status = statusNotEditable
 		return m
@@ -139,7 +139,7 @@ func (m Model) dropDraft(key string) Model {
 	return m.dropDrafts(func(k string) bool { return k == key })
 }
 
-func (m Model) treeDecor(r *workspace.Request) (method, mark string) {
+func (m Model) treeRowMarks(r *workspace.Request) (method, mark string) {
 	method = r.Method
 	if d, ok := m.drafts[m.draftKey(r.Path)]; ok {
 		method = d.Request.Method
@@ -181,7 +181,7 @@ func (m Model) writeDraft() Model {
 		m.status = changedOnDiskStatus([]string{file.Name})
 		return m
 	}
-	req, note, err := m.routeSaveSecrets(m.effective(file), file.Name)
+	req, note, err := m.routeSaveSecrets(m.withDraft(file), file.Name)
 	if err == nil {
 		err = m.ws().SaveRequest(&req)
 	}
@@ -206,13 +206,13 @@ func (m Model) session() state.Session {
 	return state.Session{LastEnv: m.envName, LastRequest: last, Drafts: drafts, Scratch: m.scratch}
 }
 
-func (m Model) saveSession() (Model, error) {
+func (m Model) writeSession() (Model, error) {
 	m.deps.Session = m.session()
 	return m, m.deps.StateStore.Save(m.ws().Root, m.deps.Session)
 }
 
 func (m Model) persistSession() Model {
-	m, err := m.saveSession()
+	m, err := m.writeSession()
 	if err != nil {
 		m = m.fail("session: " + err.Error())
 	}
@@ -220,7 +220,7 @@ func (m Model) persistSession() Model {
 }
 
 func (m Model) quit() (Model, tea.Cmd) {
-	m, _ = m.saveSession()
+	m, _ = m.writeSession()
 	return m, tea.Quit
 }
 

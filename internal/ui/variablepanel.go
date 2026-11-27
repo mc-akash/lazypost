@@ -39,13 +39,13 @@ func (m Model) tableRequest() (*workspace.Request, workspace.Request) {
 	return nil, workspace.Request{}
 }
 
-func (m Model) varRows() []vars.Row {
+func (m Model) varsRows() []vars.Row {
 	file, tmpl := m.tableRequest()
 	return vars.ForRequest(m.ws(), m.highlightedEnv(), file).Table(vars.RequestRefs(tmpl))
 }
 
 func (m Model) selectedVar() (vars.Row, bool) {
-	rows := m.varRows()
+	rows := m.varsRows()
 	if len(rows) == 0 {
 		return vars.Row{}, false
 	}
@@ -57,7 +57,7 @@ func (m Model) isRevealed(name string) bool {
 	return e != nil && m.variables.revealed[revealKey(e.Name, name)]
 }
 
-func (m Model) masked(row vars.Row) bool { return row.Secret && !m.isRevealed(row.Name) }
+func (m Model) isMasked(row vars.Row) bool { return row.Secret && !m.isRevealed(row.Name) }
 
 func (m Model) varsTitle() string {
 	title := "[" + km.Vars[0] + "] " + varsTitleName
@@ -90,8 +90,8 @@ func (Model) varsBindings() []binding {
 }
 
 func (m Model) moveVarCursor(delta int) Model {
-	n := len(m.varRows())
-	m.variables.cursor = step(m.variables.cursor, delta, n)
+	n := len(m.varsRows())
+	m.variables.cursor = clampStep(m.variables.cursor, delta, n)
 	return m
 }
 
@@ -103,7 +103,7 @@ func (m Model) editVar() Model {
 	if m.highlightedEnv() == nil {
 		return m.createEnvThen(Model.editVar)
 	}
-	masked := m.masked(row)
+	masked := m.isMasked(row)
 	initial := row.Value
 	if masked {
 		initial = ""
@@ -242,7 +242,7 @@ func writeTarget(name string, secret bool) vars.WriteTarget {
 	return vars.PlanWrite(vars.Row{Name: name, Source: src})
 }
 
-func (m Model) ownRow(row vars.Row, verb string) (Model, bool) {
+func (m Model) requireOwnVar(row vars.Row, verb string) (Model, bool) {
 	switch {
 	case row.Missing:
 		m.status = row.Name + " is not defined"
@@ -259,7 +259,7 @@ func (m Model) deleteVar() Model {
 	if !ok {
 		return m
 	}
-	if m, ok = m.ownRow(row, "deleted"); !ok {
+	if m, ok = m.requireOwnVar(row, "deleted"); !ok {
 		return m
 	}
 	return m.confirmDelete(dialogDelVar, row.Name, func(m Model) Model {
@@ -282,7 +282,7 @@ func (m Model) toggleSecret() Model {
 	if !ok {
 		return m
 	}
-	if m, ok = m.ownRow(row, "moved"); !ok {
+	if m, ok = m.requireOwnVar(row, "moved"); !ok {
 		return m
 	}
 	return m.saveVar(row.Name, row.Value, writeTarget(row.Name, row.Source == vars.SrcEnv))
@@ -329,7 +329,7 @@ func cloneVars(src map[string]string) map[string]string {
 }
 
 func (m Model) varsLines(w, h int) []string {
-	rows := m.varRows()
+	rows := m.varsRows()
 	nameW, fromW := len(varsHeader[0]), len(varsHeader[2])
 	for _, r := range rows {
 		nameW = max(nameW, displayCells(cleanText(r.Name)))
@@ -348,17 +348,17 @@ func (m Model) varsLines(w, h int) []string {
 	cursor := clampCursor(m.variables.cursor, len(rows))
 	start, end := listWindow(len(rows), cursor, h-1)
 	for i := start; i < end; i++ {
-		lines = append(lines, m.varLine(rows[i], cols, w, i == cursor))
+		lines = append(lines, m.varsLine(rows[i], cols, w, i == cursor))
 	}
 	return lines
 }
 
-func (m Model) varLine(r vars.Row, cols [3]int, w int, selected bool) string {
+func (m Model) varsLine(r vars.Row, cols [3]int, w int, selected bool) string {
 	value, from := cleanText(r.Value), r.Source.String()
 	switch {
 	case r.Missing:
 		value, from = missingValue, ""
-	case m.masked(r):
+	case m.isMasked(r):
 		value = maskedValue
 	}
 	cells := [3]string{cleanText(r.Name), value, from}

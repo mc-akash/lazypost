@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/google/shlex"
 
@@ -433,7 +434,7 @@ func decodeANSIC(cmd string, start int) (string, int, error) {
 func parseHex(s string, maxDigits int) (int, int) {
 	v, n := 0, 0
 	for n < maxDigits && n < len(s) {
-		d := strings.IndexByte("0123456789abcdef", toLower(s[n]))
+		d := strings.IndexRune("0123456789abcdef", unicode.ToLower(rune(s[n])))
 		if d < 0 {
 			break
 		}
@@ -441,11 +442,4 @@ func parseHex(s string, maxDigits int) (int, int) {
 		n++
 	}
 	return v, n
-}
-
-func toLower(b byte) byte {
-	if 'A' <= b && b <= 'Z' {
-		return b + 'a' - 'A'
-	}
-	return b
 }

@@ -53,7 +53,7 @@ func (m Model) submitSaveAs(src, prefill, value string) Model {
 		m.status = statusSaveAsCancel
 		return m
 	}
-	created, note, err := m.saveNewRequest(folders, name, m.effective(file))
+	created, note, err := m.saveNewRequest(folders, name, m.withDraft(file))
 	if err != nil {
 		return m.saveFailed("save as failed: ", err, func(m Model) Model { return m.submitSaveAs(src, prefill, value) })
 	}

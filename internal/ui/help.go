@@ -113,8 +113,8 @@ func (hs *helpScreen) bindings() []binding {
 		{keys: keys(&fixed.Type), hint: "search"},
 		{keys: keys(enter), run: hs.run, hint: "run"},
 		back,
-		{keys: keys(&km.NextItem, &fixed.NextLine), run: set(func(h helpScreen) helpScreen { h.cursor = step(h.cursor, 1, n); return h })},
-		{keys: keys(&km.PrevItem, &fixed.PrevLine), run: set(func(h helpScreen) helpScreen { h.cursor = step(h.cursor, -1, n); return h })},
+		{keys: keys(&km.NextItem, &fixed.NextLine), run: set(func(h helpScreen) helpScreen { h.cursor = clampStep(h.cursor, 1, n); return h })},
+		{keys: keys(&km.PrevItem, &fixed.PrevLine), run: set(func(h helpScreen) helpScreen { h.cursor = clampStep(h.cursor, -1, n); return h })},
 		{keys: keys(&fixed.Backspace), run: set(func(h helpScreen) helpScreen {
 			if r := []rune(h.query); len(r) > 0 {
 				h.query, h.cursor = string(r[:len(r)-1]), 0

@@ -59,7 +59,7 @@ func kvField(r *workspace.Request, tab int) *[]workspace.KV {
 	return nil
 }
 
-func (m Model) reqRowCount() int {
+func (m Model) requestRowCount() int {
 	tmpl := m.selectedRequest()
 	if kvs := kvField(&tmpl, m.request.tab); kvs != nil {
 		return len(*kvs)
@@ -70,24 +70,24 @@ func (m Model) reqRowCount() int {
 	return 0
 }
 
-func (m Model) reqRow() int { return clampCursor(m.request.row, m.reqRowCount()) }
+func (m Model) requestRow() int { return clampCursor(m.request.row, m.requestRowCount()) }
 
-func (m Model) moveReqRow(delta int) Model {
-	m.request.row = step(m.request.row, delta, m.reqRowCount())
+func (m Model) moveRequestRow(delta int) Model {
+	m.request.row = clampStep(m.request.row, delta, m.requestRowCount())
 	return m
 }
 
 func (m Model) editKVRows(fn func(kvs *[]workspace.KV, row int)) Model {
-	if kvField(&workspace.Request{}, m.request.tab) == nil || m.reqRowCount() == 0 {
+	if kvField(&workspace.Request{}, m.request.tab) == nil || m.requestRowCount() == 0 {
 		return m
 	}
 	m, ok := m.requireEditable()
 	if !ok {
 		return m
 	}
-	tab, row := m.request.tab, m.reqRow()
+	tab, row := m.request.tab, m.requestRow()
 	m = m.editRequest(func(r *workspace.Request) { fn(kvField(r, tab), row) })
-	m.request.row = m.reqRow()
+	m.request.row = m.requestRow()
 	return m
 }
 
@@ -109,7 +109,7 @@ func (m Model) editKVRow(add bool) Model {
 	if !ok {
 		return m
 	}
-	tab, row := m.request.tab, m.reqRow()
+	tab, row := m.request.tab, m.requestRow()
 	initial := ""
 	if !add {
 		if row >= len(*kvs) {
@@ -136,7 +136,7 @@ func (m Model) editKVRow(add bool) Model {
 			(*p)[row] = kv
 		})
 		if add {
-			m.request.row = m.reqRowCount() - 1
+			m.request.row = m.requestRowCount() - 1
 		}
 		return m, nil
 	}).withHint(hintKV)
@@ -178,7 +178,7 @@ func (m Model) addKVRow() Model {
 func (m Model) enterRow() (Model, tea.Cmd) {
 	switch m.request.tab {
 	case reqTabHeaders, reqTabParams:
-		if m.reqRowCount() == 0 {
+		if m.requestRowCount() == 0 {
 			return m.addKVRow(), nil
 		}
 		return m.editKVRow(false), nil
@@ -195,7 +195,7 @@ func (m Model) editAuthRow() Model {
 	if !ok {
 		return m
 	}
-	row := m.reqRow()
+	row := m.requestRow()
 	if row == 0 {
 		return m.openAuthPicker()
 	}

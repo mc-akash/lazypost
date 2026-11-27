@@ -172,7 +172,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) SaveSession() error {
-	_, err := m.saveSession()
+	_, err := m.writeSession()
 	return err
 }
 
@@ -207,7 +207,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case editorDoneMsg:
 		return m.handleEditorDone(msg), nil
 	case tea.KeyPressMsg:
-		if is(msg.String(), km.ForceQuit) {
+		if isKey(msg.String(), km.ForceQuit) {
 			return m.quit()
 		}
 		if m.overlay != nil {
@@ -245,13 +245,13 @@ func (m Model) globalBindings() []binding {
 			return m.setFocus(m.focus.cycleColumn(direction(m.lastKey, km.NextSidePanel))), nil
 		}, help: "previous / next panel in the same column"},
 		{keys: keys(&km.NextPanel, &km.PrevPanel), run: func(m Model) (Model, tea.Cmd) {
-			return m.setFocus(cycle(m.focus, direction(m.lastKey, km.NextPanel))), nil
+			return m.setFocus(cyclePanel(m.focus, direction(m.lastKey, km.NextPanel))), nil
 		}, help: "next / previous panel"},
 		{keys: listMoves, run: func(m Model) (Model, tea.Cmd) {
 			return m.moveCursor(direction(m.lastKey, km.NextItem)), nil
 		}, help: "move down / up"},
 		{keys: keys(&km.GotoTop, &km.GotoBottom), run: func(m Model) (Model, tea.Cmd) {
-			return m.jumpEdge(is(m.lastKey, km.GotoBottom)), nil
+			return m.jumpEdge(isKey(m.lastKey, km.GotoBottom)), nil
 		}, help: "top / bottom"},
 		{keys: keys(&km.NewUnsaved), run: noCmd(Model.openScratch), help: "new unsaved request", hint: scratchHint},
 		{keys: keys(&km.SwitchEnv), run: noCmd(Model.openEnvPicker), help: "switch environment (filter with search)"},
@@ -306,7 +306,7 @@ func (m Model) setFocus(p Panel) Model {
 	return m
 }
 
-func cycle(p Panel, delta int) Panel {
+func cyclePanel(p Panel, delta int) Panel {
 	n := len(cyclePanels)
 	for i, c := range cyclePanels {
 		if c == p {

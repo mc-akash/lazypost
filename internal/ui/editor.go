@@ -78,7 +78,7 @@ func writeTempFile(pattern string, data []byte) (string, error) {
 }
 
 func (m Model) requestTempFile() (string, error) {
-	req, _, ok := m.editable()
+	req, _, ok := m.editableRequest()
 	if !ok {
 		return "", errNotEditable
 	}
@@ -134,7 +134,7 @@ func (m Model) handleEditorDone(msg editorDoneMsg) Model {
 }
 
 func (m Model) applyEditedRequest(path string) Model {
-	cur, file, ok := m.editable()
+	cur, file, ok := m.editableRequest()
 	if !ok {
 		m.status = statusNotEditable
 		return m
@@ -176,7 +176,7 @@ func sameRequest(a, b workspace.Request) bool {
 }
 
 func (m Model) setBodyContent(content string) Model {
-	cur, _, ok := m.editable()
+	cur, _, ok := m.editableRequest()
 	if !ok {
 		m.status = statusNotEditable
 		return m

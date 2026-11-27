@@ -71,7 +71,7 @@ func (p collectionPanel) rows(root *workspace.Folder) []treeRow {
 }
 
 func (p collectionPanel) move(delta int, root *workspace.Folder) collectionPanel {
-	p.cursor = step(p.cursor, delta, len(p.rows(root)))
+	p.cursor = clampStep(p.cursor, delta, len(p.rows(root)))
 	return p
 }
 

@@ -131,7 +131,7 @@ func (p listPicker) bindings() []binding {
 	return append(bs,
 		binding{keys: keys(&km.GotoTop, &km.GotoBottom), run: func(m Model) (Model, tea.Cmd) {
 			next := p
-			next.cursor = edge(n, is(m.lastKey, km.GotoBottom))
+			next.cursor = edge(n, isKey(m.lastKey, km.GotoBottom))
 			m.overlay = &next
 			return m, nil
 		}},
@@ -156,7 +156,7 @@ func (p listPicker) pick(m Model) (Model, tea.Cmd) {
 }
 
 func (p listPicker) move(delta, n int) listPicker {
-	p.cursor = step(p.cursor, delta, n)
+	p.cursor = clampStep(p.cursor, delta, n)
 	return p
 }
 
