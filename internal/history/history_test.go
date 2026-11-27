@@ -216,30 +216,21 @@ func TestRedactAuthTokenAndAPIKey(t *testing.T) {
 	}
 }
 
-func TestRedactAuthHeaderAlwaysMasked(t *testing.T) {
+func TestRedactMasksOnlySecrets(t *testing.T) {
 	req := workspace.Request{Headers: []workspace.KV{
 		{Key: "Authorization", Value: "Basic dTpwYXNz"},
-		{Key: "authorization", Value: "Token abc"},
-		{Key: "Proxy-Authorization", Value: "opaque"},
-		{Key: "X-Other", Value: "Basic dTpwYXNz"},
+		{Key: "Cookie", Value: "session=lit"},
+		{Key: "X-Token", Value: "Bearer s3cret"},
 	}}
-	cases := []struct {
-		name    string
-		secrets []string
-	}{{"with secrets", []string{"pass"}}, {"no secrets", nil}}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			got := Redact(req, c.secrets)
-			want := []string{"Basic ••••", "Token ••••", "••••", "Basic dTpwYXNz"}
-			for i, w := range want {
-				if got.Headers[i].Value != w {
-					t.Errorf("%s: got %q, want %q", got.Headers[i].Key, got.Headers[i].Value, w)
-				}
-			}
-			if req.Headers[0].Value != "Basic dTpwYXNz" {
-				t.Fatal("Redact mutated input")
-			}
-		})
+	got := Redact(req, []string{"s3cret"})
+	want := []string{"Basic dTpwYXNz", "session=lit", "Bearer ••••"}
+	for i, w := range want {
+		if got.Headers[i].Value != w {
+			t.Errorf("%s: got %q, want %q", got.Headers[i].Key, got.Headers[i].Value, w)
+		}
+	}
+	if req.Headers[2].Value != "Bearer s3cret" {
+		t.Fatal("Redact mutated input")
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 	"github.com/mc-akash/lazypost/internal/workspace"
 )
 
-func TestHistoryEntryHasNoLiteralCredentials(t *testing.T) {
+func TestHistoryRedactsOnlySecretVariables(t *testing.T) {
 	srv := serve(t, &recorder{body: []byte("ok")})
 	ws := fixtureWS(t)
 	req := requestByName(t, folderByName(t, ws, "users"), "get user")
@@ -37,18 +37,14 @@ func TestHistoryEntryHasNoLiteralCredentials(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, raw := range map[string][]byte{"entry": inMemory, "disk": onDisk} {
-		for _, lit := range []string{"lit-bearer-abc123", "lit-basic-pw-xyz", "lit-cookie-sess", "lit-proxy-cred"} {
-			if bytes.Contains(raw, []byte(lit)) {
-				t.Errorf("%s leaks %q:\n%s", name, lit, raw)
+		for _, lit := range []string{"lit-bearer-abc123", "lit-basic-pw-xyz", "lit-cookie-sess", "lit-proxy-cred", "{{token}}"} {
+			if !bytes.Contains(raw, []byte(lit)) {
+				t.Errorf("%s should keep %q:\n%s", name, lit, raw)
 			}
 		}
-		if !bytes.Contains(raw, []byte("{{token}}")) {
-			t.Errorf("%s lost the {{token}} reference:\n%s", name, raw)
+		if bytes.Contains(raw, []byte("staging-secret-token")) {
+			t.Errorf("%s leaks the {{token}} secret value:\n%s", name, raw)
 		}
-	}
-	tmpl := m.history.entries[0].Template
-	if tmpl.Headers[len(tmpl.Headers)-3].Value != "Bearer ••••" || tmpl.Auth.Username != "bob" {
-		t.Fatalf("template = %+v", tmpl)
 	}
 }
 

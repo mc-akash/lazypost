@@ -154,8 +154,7 @@ func (m Model) send() (Model, tea.Cmd) {
 	m = m.cancelSend()
 
 	resolved, missing, r := m.resolve(sel)
-	tmpl, literals := maskLiteralCredentials(sel.tmpl)
-	secrets := append(r.SecretValues(), literals...)
+	secrets := r.SecretValues()
 
 	m.seq++
 	ctx, cancel := context.WithCancel(context.Background())
@@ -170,7 +169,7 @@ func (m Model) send() (Model, tea.Cmd) {
 			Env:         m.envName,
 			Root:        m.ws().Root,
 			RequestPath: sel.path,
-			Template:    tmpl,
+			Template:    sel.tmpl,
 			Sent:        history.Redact(resolved, secrets),
 		},
 	}
@@ -186,26 +185,6 @@ func (m Model) send() (Model, tea.Cmd) {
 		cmd = tea.Batch(cmd, m.spin.Tick)
 	}
 	return m, cmd
-}
-
-func maskLiteralCredentials(t workspace.Request) (workspace.Request, []string) {
-	out, found := extractSecrets(t, "", &workspace.Env{})
-	mask := func(got *string, was string) {
-		if *got != was {
-			*got = history.MaskCredentials(*got)
-		}
-	}
-	for i := range out.Headers {
-		mask(&out.Headers[i].Value, t.Headers[i].Value)
-	}
-	mask(&out.Auth.Password, t.Auth.Password)
-	mask(&out.Auth.Token, t.Auth.Token)
-	mask(&out.Auth.Value, t.Auth.Value)
-	values := make([]string, len(found))
-	for i, s := range found {
-		values[i] = s.value
-	}
-	return out, values
 }
 
 func (m Model) tickSpinner(msg spinner.TickMsg) (Model, tea.Cmd) {

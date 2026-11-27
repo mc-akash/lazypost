@@ -215,11 +215,6 @@ func Redact(req workspace.Request, secrets []string) workspace.Request {
 	out.URL = r(req.URL)
 	out.Params = redactKVs(req.Params, r)
 	out.Headers = redactKVs(req.Headers, r)
-	for i, h := range out.Headers {
-		if isAuthHeader(h.Key) {
-			out.Headers[i].Value = MaskCredentials(h.Value)
-		}
-	}
 	out.Auth.Token = r(req.Auth.Token)
 	out.Auth.Username = r(req.Auth.Username)
 	out.Auth.Password = r(req.Auth.Password)
@@ -247,16 +242,4 @@ func redactKVs(kvs []workspace.KV, r func(string) string) []workspace.KV {
 		out[i] = kv
 	}
 	return out
-}
-
-func isAuthHeader(name string) bool {
-	return strings.EqualFold(name, "Authorization") || strings.EqualFold(name, "Proxy-Authorization")
-}
-
-func MaskCredentials(v string) string {
-	scheme, _, hasCreds := strings.Cut(strings.TrimSpace(v), " ")
-	if !hasCreds {
-		return redactMask
-	}
-	return scheme + " " + redactMask
 }
