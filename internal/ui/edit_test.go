@@ -408,6 +408,30 @@ func TestEditorCommandResolution(t *testing.T) {
 	}
 }
 
+func TestSplitWindowsCommand(t *testing.T) {
+	exe := filepath.Join(t.TempDir(), `Program Files`, `nvim.exe`)
+	if err := os.MkdirAll(filepath.Dir(exe), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(exe, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		val  string
+		want []string
+	}{
+		{`C:\Tools\nvim.exe`, []string{`C:\Tools\nvim.exe`}},
+		{`code --wait`, []string{"code", "--wait"}},
+		{`"C:\Program Files\x.exe" -n`, []string{`C:\Program Files\x.exe`, "-n"}},
+		{exe, []string{exe}},
+	}
+	for _, c := range cases {
+		if got := splitWindowsCommand(c.val); strings.Join(got, "|") != strings.Join(c.want, "|") {
+			t.Errorf("%q → %q, want %q", c.val, got, c.want)
+		}
+	}
+}
+
 func writeTemp(t *testing.T, content string) string {
 	t.Helper()
 	p := filepath.Join(t.TempDir(), "edit")

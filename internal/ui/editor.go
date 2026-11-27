@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -18,6 +19,7 @@ import (
 
 const (
 	defaultEditor      = "vi"
+	windowsEditor      = "notepad"
 	statusEmptyEdit    = "edit cancelled: empty file"
 	tempRequestPattern = "lazypost-request-*.yaml"
 	tempBodyPrefix     = "lazypost-body-*"
@@ -46,8 +48,11 @@ func editorCommand(path string) (*exec.Cmd, error) {
 	}
 	if val == "" {
 		val = defaultEditor
+		if runtime.GOOS == "windows" {
+			val = windowsEditor
+		}
 	}
-	args, err := shlex.Split(val)
+	args, err := splitEditor(val)
 	if err != nil {
 		return nil, fmt.Errorf("parse editor %q: %w", val, err)
 	}
@@ -55,6 +60,25 @@ func editorCommand(path string) (*exec.Cmd, error) {
 		return nil, fmt.Errorf("empty editor command %q", val)
 	}
 	return exec.Command(args[0], append(args[1:], path)...), nil
+}
+
+func splitEditor(val string) ([]string, error) {
+	if runtime.GOOS == "windows" {
+		return splitWindowsCommand(val), nil
+	}
+	return shlex.Split(val)
+}
+
+func splitWindowsCommand(val string) []string {
+	if quoted, ok := strings.CutPrefix(val, `"`); ok {
+		if prog, rest, ok := strings.Cut(quoted, `"`); ok {
+			return append([]string{prog}, strings.Fields(rest)...)
+		}
+	}
+	if _, err := os.Stat(val); err == nil {
+		return []string{val}
+	}
+	return strings.Fields(val)
 }
 
 func writeTempFile(pattern string, data []byte) (string, error) {
