@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	varsTitlePrefix = "[4] Variables"
-	maskedValue     = "••••••••"
-	missingValue    = "(missing)"
-	colGap          = "  "
-	maxNameCol      = 24
+	varsTitleName = "Variables"
+	maskedValue   = "••••••••"
+	missingValue  = "(missing)"
+	colGap        = "  "
+	maxNameCol    = 24
 )
 
 var varsHeader = [3]string{"NAME", "VALUE", "FROM"}
@@ -60,10 +60,11 @@ func (m Model) isRevealed(name string) bool {
 func (m Model) masked(row vars.Row) bool { return row.Secret && !m.isRevealed(row.Name) }
 
 func (m Model) varsTitle() string {
+	title := "[" + km.Vars[0] + "] " + varsTitleName
 	if e := m.highlightedEnv(); e != nil {
-		return varsTitlePrefix + " · " + e.Name
+		return title + " · " + e.Name
 	}
-	return varsTitlePrefix
+	return title
 }
 
 func (Model) varsBindings() []binding {

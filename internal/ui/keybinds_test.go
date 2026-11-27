@@ -211,3 +211,11 @@ func TestBindingListsDispatch(t *testing.T) {
 		t.Error("d should ask to confirm the delete")
 	}
 }
+
+func TestVarsTitleShowsVarsKey(t *testing.T) {
+	rebind(t, func(k *config.Keymap) { k.Vars = config.Keys{"ctrl+v", "V"} })
+	m := press(newTestModel(t, fixtureWS(t)), "1", "k", "ctrl+v")
+	if out := m.plainRender(); !strings.Contains(out, "[ctrl+v] Variables · staging") {
+		t.Fatalf("title should name the first vars key:\n%s", out)
+	}
+}

@@ -111,7 +111,7 @@ func TestFocusEnvsShowsVarsTable(t *testing.T) {
 	m, _ := sendModel(t, ws, "http://example.invalid")
 	m = press(m, "1")
 	out := m.plainRender()
-	for _, want := range []string{"[4] Variables · staging", "NAME", "VALUE", "FROM", "base_url", "trace_id", "(missing)", "global", "env", "secret"} {
+	for _, want := range []string{"[V] Variables · staging", "NAME", "VALUE", "FROM", "base_url", "trace_id", "(missing)", "global", "env", "secret"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("vars table missing %q:\n%s", want, out)
 		}
@@ -123,7 +123,7 @@ func TestFocusEnvsShowsVarsTable(t *testing.T) {
 		t.Fatal("(missing) should be red")
 	}
 
-	if out := press(m, "k").plainRender(); !strings.Contains(out, "[4] Variables · dev") || !strings.Contains(out, "http://dev.example") {
+	if out := press(m, "k").plainRender(); !strings.Contains(out, "[V] Variables · dev") || !strings.Contains(out, "http://dev.example") {
 		t.Fatalf("table should show the highlighted env dev:\n%s", out)
 	}
 }
@@ -152,7 +152,7 @@ func TestVJumpAndEscReturn(t *testing.T) {
 	if m = press(m, "V"); m.Focus() != PanelVars {
 		t.Fatalf("V: focus = %v, want PanelVars", m.Focus())
 	}
-	if !strings.Contains(m.plainRender(), "[4] Variables · staging") {
+	if !strings.Contains(m.plainRender(), "[V] Variables · staging") {
 		t.Fatal("V should show the active env staging")
 	}
 	if m = press(m, "esc"); m.Focus() != PanelResponse {
