@@ -1,6 +1,7 @@
 # lazypost
 
 [![test](https://github.com/mc-akash/lazypost/actions/workflows/test.yml/badge.svg)](https://github.com/mc-akash/lazypost/actions/workflows/test.yml)
+[![coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mc-akash/55f3e38c5bcd947092a69487b9b2e1b0/raw/lazypost-coverage.json)](https://github.com/mc-akash/lazypost/actions/workflows/test.yml)
 
 A terminal HTTP client with the feel of lazygit: panels side by side, vim
 navigation, single-key actions. Built for the daily loop of picking a
